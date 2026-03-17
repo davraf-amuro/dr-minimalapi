@@ -1,3 +1,7 @@
+---
+applyTo: "**"
+---
+
 # Minimal API Design Rules (AI Agent)
 
 Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo ottimizzato per token.
@@ -161,5 +165,5 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v1.2 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-02-26 15:01
+*Template v1.3 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-03-17 21:28
 
