@@ -162,8 +162,17 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
 - [ ] File .http aggiunto per endpoint nuovi
 - [ ] `appsettings.json` contiene solo valori fake/placeholder per dati sensibili, mai credenziali reali
 
+## 🎯 Criteri di successo (verificare prima di iniziare)
+
+Prima di iniziare, chiediti:
+- [ ] So esattamente quali file creerò/modificherò?
+- [ ] Ho letto le istruzioni modulari pertinenti al task?
+- [ ] Ho verificato che l'endpoint o il componente non esista già?
+
+Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
+
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v1.3 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-03-17 21:28
+*Template v1.4 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-03-25 — claude-sonnet-4-6
 
