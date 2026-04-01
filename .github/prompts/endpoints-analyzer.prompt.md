@@ -33,7 +33,7 @@ Analizza le classi in Endpoints/ e genera un documento per ogni group (MapGroup)
 Usa data e ora correnti (Get-Date -Format "yyyy-MM-dd HH:mm"):
 ```markdown
 ---
-*Card generata il: yyyy-MM-dd HH:mm | Versione template: x.x | LLM: [indicare il modello usato]*
+*Revisione v1.0 — {YYYY-MM-DD HH:MM} — {modello-llm}*
 ```
 La versione template e in fondo a questo file.
 
