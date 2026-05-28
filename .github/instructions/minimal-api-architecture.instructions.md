@@ -31,6 +31,7 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
   - Endpoints/
   - Infrastructure/Provider/{Entities,Filters,*DbContext.cs,*Provider.cs}
   - Transformers/
+  - Validators/
   - Properties/
   - Program.cs
 - test/
@@ -46,6 +47,7 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 7) Program.cs deve chiamare gli extension methods dopo MapOpenApi
 8) Transformer OpenAPI: classe AddDocumentInformations in Transformers/ + registrazione AddOpenApi
 9) GET con provider: filtro dedicato, mapping manuale a DTO, ProblemDetails 404 se vuoto
+10) POST/PUT/PATCH con body: valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
 
 ## Pattern richiesti (copiabili)
 
@@ -159,6 +161,7 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
 - [ ] Transformer AddDocumentInformations creato e registrato
 - [ ] Program.cs chiama MapOpenApi prima dei Map*Endpoints
 - [ ] GET con provider: filter + mapping DTO + ProblemDetails 404 se vuoto
+- [ ] POST/PUT/PATCH: validator creato in `Validators/`, registrato in DI, chiamato nel handler prima della logica
 - [ ] File .http aggiunto per endpoint nuovi
 - [ ] `appsettings.json` contiene solo valori fake/placeholder per dati sensibili, mai credenziali reali
 
