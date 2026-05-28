@@ -16,6 +16,7 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 - SimpleAuthenticationTools (API Key): chiedere prima di aggiungere il pacchetto
 - Aggiungi sempre il file launchSettings.json con configurazione per IIS Express e Kestrel
 - Aggiungi sempre il file appsettings.local.json, aggiungi la chiamata in program.cs, e ignora il file in .gitignore
+- Aggiungi sempre `.vscode/launch.json` e `.vscode/tasks.json` con profili debug `coreclr`
 - Dati sensibili: segui sempre `sensitive-data.instructions.md`
 
 ## Vietato
@@ -48,27 +49,33 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 8) Transformer OpenAPI: classe AddDocumentInformations in Transformers/ + registrazione AddOpenApi
 9) GET con provider: filtro dedicato, mapping manuale a DTO, ProblemDetails 404 se vuoto
 10) POST/PUT/PATCH con body: valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
+11) Ogni nuovo progetto include `HealthMapping.cs` con: `MapHealthChecks("/health")` (infrastruttura, non in Scalar) + `GET /api/v1/status` versioned (consumer-facing, in Scalar)
 
 ## Pattern richiesti (copiabili)
 
-### Extension method + group
+### Extension method + group (pattern starter: HealthMapping)
 ```csharp
-public static class WeatherMapping
+using Asp.Versioning;
+using Asp.Versioning.Builder;   // ApiVersionSet è qui (v10.0.0+)
+
+namespace <Project>.Endpoints;
+
+public static class HealthMapping
 {
-    public static IEndpointRouteBuilder MapWeatherEndpoints(this IEndpointRouteBuilder routes, ApiVersionSet versionSet)
+    public static IEndpointRouteBuilder MapHealthEndpoints(this IEndpointRouteBuilder routes, ApiVersionSet versionSet)
     {
-        var group = routes.MapGroup("api/v{version:apiVersion}/weather")
-            .WithTags("Weather")
+        routes.MapHealthChecks("/health");
+
+        var group = routes.MapGroup("api/v{version:apiVersion}/status")
+            .WithTags("Status")
             .WithApiVersionSet(versionSet)
             .MapToApiVersion(ApiVersionFactory.Version1);
 
-        group.MapGet("/", GetHandler)
-            .RequireAuthorization()
-            .Produces<IEnumerable<WeatherDto>>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound)
-            .WithName("GetWeather")
-            .WithSummary("Get weather")
-            .WithDescription("Returns weather data");
+        group.MapGet("/", () => TypedResults.Ok(new { status = "ok" }))
+            .Produces<object>(StatusCodes.Status200OK)
+            .WithName("GetStatus")
+            .WithSummary("API status")
+            .WithDescription("Returns ok when the API is running");
 
         return routes;
     }
@@ -95,16 +102,22 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer<AddDocumentInformations>();
 });
 
+builder.Services.AddHealthChecks();
+
 var versionSet = app.NewApiVersionSet()
     .HasApiVersion(ApiVersionFactory.Version1)
     .Build();
 
 app.MapOpenApi();
-app.MapWeatherEndpoints(versionSet);
+app.MapScalarApiReference();
+app.MapHealthEndpoints(versionSet);
 ```
 
 ### OpenAPI transformer
 ```csharp
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.OpenApi;   // non Microsoft.OpenApi.Models (v2.0.0+)
+
 public class AddDocumentInformations : IOpenApiDocumentTransformer
 {
     public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
@@ -144,6 +157,67 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
 }
 ```
 
+### VS Code debug (.vscode/launch.json + tasks.json)
+
+**launch.json** — `"type": "coreclr"` (portabile, senza C# Dev Kit):
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug <project> (http)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/<project>/bin/Debug/net10.0/<project>.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/<project>",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5000"
+      }
+    },
+    {
+      "name": "Debug <project> (https)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/<project>/bin/Debug/net10.0/<project>.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/<project>",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:5001;http://localhost:5000"
+      }
+    }
+  ]
+}
+```
+
+**tasks.json**:
+```json
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/src/<project>/<project>.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary;ForceNoAlign"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    }
+  ]
+}
+```
+
 ## Errori comuni (rapidi)
 - Version reader non UrlSegmentApiVersionReader => errore su MapToApiVersion
 - Route senza api/v{version:apiVersion}/... => 404 o no route match
@@ -151,6 +225,8 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
 - Scalar senza ApiExplorer config => nessun endpoint
 - Provider non registrato in DI => Cannot resolve service
 - Date query non ISO 8601 => DateTime conversion error
+- `ApiVersionSet` CS0246 => manca `using Asp.Versioning.Builder` (Asp.Versioning v10.0.0+)
+- `Microsoft.OpenApi.Models` CS0234 => usare `using Microsoft.OpenApi` (Microsoft.OpenApi v2.0.0+)
 
 ## ✅ Checklist Post-Generazione
 - [ ] Endpoint solo in extension methods in Endpoints/*Mapping.cs
@@ -162,7 +238,9 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
 - [ ] Program.cs chiama MapOpenApi prima dei Map*Endpoints
 - [ ] GET con provider: filter + mapping DTO + ProblemDetails 404 se vuoto
 - [ ] POST/PUT/PATCH: validator creato in `Validators/`, registrato in DI, chiamato nel handler prima della logica
+- [ ] HealthMapping.cs creato con `/health` (MapHealthChecks) e `GET /api/v1/status` (versioned, in Scalar)
 - [ ] File .http aggiunto per endpoint nuovi
+- [ ] `.vscode/launch.json` e `tasks.json` creati con `type: coreclr`
 - [ ] `appsettings.json` contiene solo valori fake/placeholder per dati sensibili, mai credenziali reali
 
 ## 🎯 Criteri di successo (verificare prima di iniziare)
@@ -177,5 +255,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v1.4 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-03-25 — claude-sonnet-4-6
+*Template v1.6 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-05-28 — claude-sonnet-4-6
 
