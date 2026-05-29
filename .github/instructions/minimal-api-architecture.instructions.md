@@ -169,7 +169,7 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/src/<project>/bin/Debug/net10.0/<project>.dll",
+      "program": "${workspaceFolder}/src/<project>/bin/net10.0/<project>.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/<project>",
       "stopAtEntry": false,
@@ -183,7 +183,7 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/src/<project>/bin/Debug/net10.0/<project>.dll",
+      "program": "${workspaceFolder}/src/<project>/bin/net10.0/<project>.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/<project>",
       "stopAtEntry": false,
@@ -195,6 +195,8 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
   ]
 }
 ```
+
+> **Nota:** Il percorso `bin/net10.0/` si applica quando `Directory.Build.props` setta `<OutputPath>bin\$(Configuration)\</OutputPath>`. Senza override, il percorso standard .NET è `bin/Debug/net10.0/`.
 
 **tasks.json**:
 ```json
@@ -255,5 +257,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v1.6 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-05-28 — claude-sonnet-4-6
+*Template v1.7 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-05-29 — claude-sonnet-4-6
 
