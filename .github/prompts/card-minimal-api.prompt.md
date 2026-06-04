@@ -13,8 +13,8 @@ Genera la scheda riassuntiva per un progetto Minimal API. Non inventare dati. La
 
 ## Analisi da eseguire
 - `.csproj`, `appsettings*.json`, `launchSettings.json`
-- `Program.cs`: versioning, OpenAPI, endpoint registrati
-- `Endpoints/*.cs`: MapGroup, route base, tag Scalar
+- `Program.cs`: versioning, OpenAPI, MapGroup registrati
+- `Endpoints/*.cs`: MapGroup, route base, tag Scalar, versione API
 - `DbContext`, provider/repository, using statements
 
 ## Template card
@@ -22,7 +22,7 @@ Genera la scheda riassuntiva per un progetto Minimal API. Non inventare dati. La
 # Card: [Nome Progetto]
 
 **Minimal API** che [descrizione scopo in una riga].
-Espone [N] endpoint group su `api/v1/`.
+Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 
 ## Identificazione
 - **Progetto:**
@@ -30,7 +30,7 @@ Espone [N] endpoint group su `api/v1/`.
 - **Workspace:** [NomeWorkspace.code-workspace]
 - **Repository:** [URL senza branch]
 - **Tipo Applicazione:** Minimal API (.NET 10)
-- **Pattern Architetturale:** Minimal API + Typed HttpClient / Provider
+- **Pattern Architetturale:** Minimal API + Provider + Scalar
 - **Versione Corrente:**
 - **Owner/Team:**
 - **Contatto Supporto:** dev-support@unidata.it
@@ -45,7 +45,7 @@ Espone [N] endpoint group su `api/v1/`.
 
 | Group | File Mapping | Route Base | Tag Scalar |
 |-------|-------------|------------|------------|
-| ... | `Endpoints/...Mapping.cs` | `api/v1/...` | ... |
+| `[Group1]` | `Endpoints/[Group1]Mapping.cs` | `api/v1/[group1]` | [Tag1] |
 
 ## Dipendenze
 
@@ -71,10 +71,10 @@ Espone [N] endpoint group su `api/v1/`.
 - **Entrypoint:** `src/<progetto>/Program.cs`
 - **Deploy:** [locale | Docker | Swarm Portainer | ...]
 - **URL Produzione:**
-- **URL Scalar (dev):** `http://localhost:{porta}/scalar`
+- **URL Scalar (dev):** [porta da launchSettings.json]
 
 ## Documentazione API
-- **OpenAPI/Swagger:** Scalar (`/scalar`)
+- **OpenAPI/Swagger:** Scalar
 - **Versioning API:** UrlSegmentApiVersionReader
 - **Versioni Supportate:** v1
 
@@ -86,14 +86,17 @@ Espone [N] endpoint group su `api/v1/`.
 - Non inventare dati; campi senza info restano vuoti
 - Tabelle senza dati: lascia solo header
 - Info sensibili: indica solo il nome variabile, mai il valore
+- Endpoint Groups: ricava route base e tag da `WithTags` e `MapGroup` nei file `Endpoints/*.cs`
+- Se il progetto non ha servizi esterni, ometti la sezione
 - Risposta del prompt: indica solo la card generata, non riepilogare i dati
 
-## Checklist Post-Generazione
+## ✅ Checklist Post-Generazione
 - [ ] `docs/` contiene la card
 - [ ] Scopo dichiarato nelle due righe sotto il titolo
-- [ ] Campi vuoti lasciati vuoti, niente dati inventati
-- [ ] Tabella Endpoint Groups compilata con route base e tag reali
+- [ ] Tabella Endpoint Groups compilata con tutti i group trovati
+- [ ] Route base e tag ricavati dal codice reale, non inventati
+- [ ] URL Scalar ricavato da launchSettings.json
 - [ ] Nessun segreto esposto
 - [ ] Footer con data e LLM presente
 
-*Template v1.1 - .NET 10 Minimal API - Token-optimized for AI agents* - Last Update 2026-06-04 - claude-sonnet-4-6
+*Template v1.1 - .NET 10 Minimal API - Token-optimized for AI agents* - Last Update 2026-06-04 — claude-sonnet-4-6
