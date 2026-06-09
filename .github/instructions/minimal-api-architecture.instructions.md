@@ -12,7 +12,7 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 - Scalar per docs (no Swagger UI)
 - Asp.Versioning.Mvc.ApiExplorer (obbligatorio per Scalar)
 - Serilog
-- Entity Framework Core 10: chiedere prima di aggiungere il pacchetto
+- Entity Framework Core 10: se già presente nel `.csproj`, dichiaralo e prosegui senza chiedere. Chiedi solo se assente.
 - SimpleAuthenticationTools (API Key): chiedere prima di aggiungere il pacchetto
 - Aggiungi sempre il file launchSettings.json con configurazione per IIS Express e Kestrel
 - Aggiungi sempre il file appsettings.local.json, aggiungi la chiamata in program.cs, e ignora il file in .gitignore
@@ -50,6 +50,29 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 9) GET con provider: filtro dedicato, mapping manuale a DTO, ProblemDetails 404 se vuoto
 10) POST/PUT/PATCH con body: valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
 11) Ogni nuovo progetto include `HealthMapping.cs` con: `MapHealthChecks("/health")` (infrastruttura, non in Scalar) + `GET /api/v1/status` versioned (consumer-facing, in Scalar)
+
+## Scoperta automatica struttura DB via MCP
+
+Se nel progetto è configurato un MCP server `db-schema` (verifica in `.claude/settings.json` o `~/.claude/settings.json`, chiave `mcpServers`):
+
+1. **Non chiedere i campi all'utente** — leggi la struttura dalla tabella:
+   - Usa `mcp__db-schema__use_connection` per selezionare la connessione
+   - Usa `mcp__db-schema__get_view_columns` o strumento equivalente per ottenere colonne e tipi
+2. **Presenta il piano di lavoro** con la struttura letta:
+   - Elenca colonne rilevate, tipo C# mappato, se nullable
+   - Dichiara: "Struttura rilevata via MCP db-schema. Procedo con piano."
+3. **Genera il validator immediatamente** — non chiedere nulla all'utente:
+   - Regole inferite dal metadato (applica sempre):
+     - `NOT NULL` → `required`
+     - `varchar(N)` / `nvarchar(N)` → `maxLength = N`
+     - colonna nullable → campo opzionale (nessun required)
+     - tipi numerici (`int`, `decimal`) → validazione di tipo garantita da C#
+   - Campi con regole non determinabili dallo schema → nessun errore per quel campo + commento `// TODO: validazione`
+   - Non chiedere regole all'utente: genera subito, codice compilabile e funzionante.
+
+Se MCP db-schema non è configurato: comportamento standard (chiedi i campi all'utente prima di procedere).
+
+---
 
 ## Pattern richiesti (copiabili)
 
