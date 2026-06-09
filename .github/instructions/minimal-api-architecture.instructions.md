@@ -31,6 +31,7 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
   - Dto/
   - Endpoints/
   - Infrastructure/Provider/{Entities,Filters,*DbContext.cs,*Provider.cs}
+  - Services/
   - Transformers/
   - Validators/
   - Properties/
@@ -47,7 +48,19 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 6) OpenAPI metadata completo: Produces + WithSummary + WithDescription + WithName
 7) Program.cs deve chiamare gli extension methods dopo MapOpenApi
 8) Transformer OpenAPI: classe AddDocumentInformations in Transformers/ + registrazione AddOpenApi
-9) GET con provider: filtro dedicato, mapping manuale a DTO, ProblemDetails 404 se vuoto
+9) GET list con provider: filtro dedicato obbligatorio su tutti i campi entità; proiezione EF-traducibile via `Expression<Func<TEntity, TDto>>`; ProblemDetails 404 se vuoto.
+   - Deriva filtro dall'entità senza chiedere nulla all'utente — applica regole tipo e genera subito
+   - Regole tipo → campo filter:
+     - string       → string?  — `(Descrizione == null || e.Descrizione.Contains(Descrizione))`
+     - int / int?   → int?     — `(Marca == null || e.Marca == Marca)`
+     - DateTime / DateTime? → due param NomeFrom? + NomeTo? — range >= / <=
+     - bool / bool? → bool?    — `(Flag == null || e.Flag == Flag)`
+   - Tutti i campi filtro nullable — nessun campo richiesto
+   - Filter class: `Infrastructure/Provider/Filters/<Entity>Filter.cs` — espone `ToExpression()` che ritorna `Expression<Func<TEntity, bool>>`
+   - Ogni DTO record espone `static Expression<Func<TEntity, TDto>> Projection => e => new(...)` — EF-traducibile
+   - Handler usa `[AsParameters]` se filtro ha ≥ 2 campi
+   - Provider: `GetAsync<TDto>(<Entity>Filter filter, Expression<Func<TEntity, TDto>> selector, CancellationToken ct)` — mai GetAllAsync senza filtro
+   - Chiamata handler: `provider.GetAsync(filter, MyDto.Projection, ct)`
 10) POST/PUT/PATCH con body: valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
 11) Ogni nuovo progetto include `HealthMapping.cs` con: `MapHealthChecks("/health")` (infrastruttura, non in Scalar) + `GET /api/v1/status` versioned (consumer-facing, in Scalar)
 
@@ -160,25 +173,128 @@ public class AddDocumentInformations : IOpenApiDocumentTransformer
 }
 ```
 
-### GET con provider
+### GET list con provider, filtro e proiezione Expression
+
 ```csharp
-private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate, MyProvider provider, CancellationToken ct)
+// DTO — Dto/<Entity>Dto.cs
+// Ogni DTO espone una Projection EF-traducibile (new-initializer con member access primitivi)
+public record ModelKitDto(int Id, string Descrizione, int? Marca, DateTime DataRegistrazione)
 {
-    var filter = new MyFilter { FromDate = FromDate, ToDate = ToDate };
-    var result = await provider.GetAsync(filter, e => e.ToDto(), ct);
+    public static Expression<Func<ModelKit, ModelKitDto>> Projection =>
+        e => new(e.Id, e.Descrizione, e.Marca, e.DataRegistrazione);
+}
+
+// DTO parziale — stessa entità, campi ridotti → SELECT ottimizzato
+public record ModelKitSummaryDto(int Id, int? Marca)
+{
+    public static Expression<Func<ModelKit, ModelKitSummaryDto>> Projection =>
+        e => new(e.Id, e.Marca);
+}
+
+// Filter — Infrastructure/Provider/Filters/<Entity>Filter.cs
+// ToExpression() incapsula tutta la logica WHERE in un'unica Expression EF-traducibile
+public class ModelKitFilter
+{
+    public string? Descrizione { get; set; }
+    public int? Marca { get; set; }
+    public DateTime? DataRegistrazioneFrom { get; set; }
+    public DateTime? DataRegistrazioneTo { get; set; }
+
+    public Expression<Func<ModelKit, bool>> ToExpression() =>
+        e => (Descrizione == null || e.Descrizione.Contains(Descrizione))
+          && (Marca == null || e.Marca == Marca)
+          && (DataRegistrazioneFrom == null || e.DataRegistrazione >= DataRegistrazioneFrom)
+          && (DataRegistrazioneTo == null || e.DataRegistrazione <= DataRegistrazioneTo);
+}
+
+// Provider — generico sul tipo di ritorno, mai GetAllAsync senza filtro
+public async Task<IEnumerable<TDto>> GetAsync<TDto>(
+    ModelKitFilter filter,
+    Expression<Func<ModelKit, TDto>> selector,
+    CancellationToken ct) =>
+    await db.ModelKits
+        .Where(filter.ToExpression())
+        .Select(selector)
+        .ToListAsync(ct);
+
+// Handler — in *Mapping.cs
+// Passare sempre una Projection statica del DTO — non costruire expression inline nell'handler
+private static async Task<IResult> GetHandler(
+    [AsParameters] ModelKitFilter filter,
+    ModelKitProvider provider,
+    CancellationToken ct)
+{
+    var result = await provider.GetAsync(filter, ModelKitDto.Projection, ct);
     if (!result.Any())
-    {
         return TypedResults.Problem(new ProblemDetails
         {
             Title = "Data Not Found",
             Status = StatusCodes.Status404NotFound,
-            Detail = "No data for specified range."
+            Detail = "No data for specified filters."
         });
-    }
 
-    return Results.Ok(result);
+    return TypedResults.Ok(result);
+}
+
+// Handler con DTO parziale — stesso provider, selector diverso
+private static async Task<IResult> GetSummaryHandler(
+    [AsParameters] ModelKitFilter filter,
+    ModelKitProvider provider,
+    CancellationToken ct)
+{
+    var result = await provider.GetAsync(filter, ModelKitSummaryDto.Projection, ct);
+    // ...
+    return TypedResults.Ok(result);
 }
 ```
+
+> **Regola critica — EF traducibilità:** `Projection` deve usare esclusivamente new-initializer con accesso a membri primitivi (`e.Id`, `e.Nome`, ecc.). Chiamate a metodi extension (es. `e.ToDto()`) NON sono EF-traducibili e causano valutazione client-side silente (full table scan in memoria).
+
+### Service layer (opzionale — quando la logica cresce)
+
+Il `Service` si interpone tra endpoint e provider. L'handler conosce solo il Service — non il provider, non le Projection.
+
+```csharp
+// Services/<Entity>Service.cs
+public class ModelKitService(ModelKitProvider provider)
+{
+    public Task<IEnumerable<ModelKitDto>> GetAllAsync(ModelKitFilter filter, CancellationToken ct) =>
+        provider.GetAsync(filter, ModelKitDto.Projection, ct);
+
+    public Task<IEnumerable<ModelKitSummaryDto>> GetSummariesAsync(ModelKitFilter filter, CancellationToken ct) =>
+        provider.GetAsync(filter, ModelKitSummaryDto.Projection, ct);
+
+    public Task<ModelKitDto?> GetByIdAsync(int id, CancellationToken ct) =>
+        provider.GetByIdAsync(id, ct);
+
+    public Task<ModelKitDto> CreateAsync(SaveModelKitRequest request, CancellationToken ct) =>
+        provider.CreateAsync(request, ct);
+
+    public Task<ModelKitDto?> UpdateAsync(int id, SaveModelKitRequest request, CancellationToken ct) =>
+        provider.UpdateAsync(id, request, ct);
+
+    public Task<bool> DeleteAsync(int id, CancellationToken ct) =>
+        provider.DeleteAsync(id, ct);
+}
+
+// Handler — inietta Service, non Provider
+private static async Task<IResult> GetAllHandler(
+    [AsParameters] ModelKitFilter filter,
+    ModelKitService service,
+    CancellationToken ct)
+{
+    var result = await service.GetAllAsync(filter, ct);
+    // ...
+}
+
+// Program.cs — registra entrambi
+builder.Services.AddScoped<ModelKitProvider>();
+builder.Services.AddScoped<ModelKitService>();
+```
+
+> **Quando introdurre il Service:** logica condivisa tra handler, autorizzazione/tenant, composizione da più provider, side-effect. Non introdurre solo per delegation pura.
+
+---
 
 ### VS Code debug (.vscode/launch.json + tasks.json)
 
@@ -261,7 +377,7 @@ private static async Task<IResult> GetHandler(DateTime FromDate, DateTime ToDate
 - [ ] Metadata OpenAPI completi (Produces, Summary, Description, Name)
 - [ ] Transformer AddDocumentInformations creato e registrato
 - [ ] Program.cs chiama MapOpenApi prima dei Map*Endpoints
-- [ ] GET con provider: filter + mapping DTO + ProblemDetails 404 se vuoto
+- [ ] GET list: `<Entity>Filter.cs` in `Infrastructure/Provider/Filters/` con `ToExpression()`, ogni DTO ha `static Projection`, provider usa `GetAsync<TDto>(filter, selector, ct)`, handler passa `MyDto.Projection`
 - [ ] POST/PUT/PATCH: validator creato in `Validators/`, registrato in DI, chiamato nel handler prima della logica
 - [ ] HealthMapping.cs creato con `/health` (MapHealthChecks) e `GET /api/v1/status` (versioned, in Scalar)
 - [ ] File .http aggiunto per endpoint nuovi
