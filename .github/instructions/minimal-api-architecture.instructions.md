@@ -39,6 +39,14 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 - test/
 - docs/
 
+## ⚠️ Vincoli critici (leggere prima dei pattern)
+
+**Regola 13 — Commenti obbligatori**: tutti i `public` method di provider/service/handler/validator richiedono `///` XML doc + commento inline su ogni operazione DB. Esclusi: getter/setter banali, wrapper di una riga. Non generare codice senza questi commenti.
+
+**EF traducibilità**: le `Projection` usano **esclusivamente** new-initializer con accesso a membri primitivi (`e.Id`, `e.Nome`). Metodi extension (`e.ToDto()`) e qualsiasi chiamata a funzione non sono EF-traducibili → causano full table scan silente. Se in dubbio, usa solo `e.Campo`.
+
+---
+
 ## Regole core (sempre)
 1) Endpoint solo in extension methods in Endpoints/*Mapping.cs
 2) URL standard: api/v{version:apiVersion}/{gruppo}/{comando?}
