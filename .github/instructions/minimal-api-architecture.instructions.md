@@ -58,11 +58,14 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
    - Tutti i campi filtro nullable — nessun campo richiesto
    - Filter class: `Infrastructure/Provider/Filters/<Entity>Filter.cs` — espone `ToExpression()` che ritorna `Expression<Func<TEntity, bool>>`
    - Ogni DTO record espone `static Expression<Func<TEntity, TDto>> Projection => e => new(...)` — EF-traducibile
+   - **DTO multipli obbligatori**: per ogni entity genera almeno due DTO record con Projection — `<Entity>Dto` completo (tutti i campi) e `<Entity>SummaryDto` ridotto (chiave + campi identificativi). Esponi `GET /` con il DTO completo e `GET /summary` con il ridotto — stesso filter, stesso provider, selector diverso
    - Handler usa `[AsParameters]` se filtro ha ≥ 2 campi
-   - Provider: `GetAsync<TDto>(<Entity>Filter filter, Expression<Func<TEntity, TDto>> selector, CancellationToken ct)` — mai GetAllAsync senza filtro
-   - Chiamata handler: `provider.GetAsync(filter, MyDto.Projection, ct)`
+   - Provider: `Get<Entity>Async<TDto>(<Entity>Filter filter, Expression<Func<TEntity, TDto>> selector, CancellationToken ct)` — mai GetAllAsync senza filtro
+   - Chiamata handler: tramite Service (vedi regola 12) — il Service passa `MyDto.Projection` al provider
 10) POST/PUT/PATCH con body: valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
 11) Ogni nuovo progetto include `HealthMapping.cs` con: `MapHealthChecks("/health")` (infrastruttura, non in Scalar) + `GET /api/v1/status` versioned (consumer-facing, in Scalar)
+12) **Service layer obbligatorio per il CRUD di entità**: classe `Services/<Entity>Service.cs` tra handler e provider. Gli handler iniettano **solo il Service** — mai il provider, mai le Projection. Il Service: sceglie la Projection per ogni caso d'uso, mappa request→entity (metodo privato `ToEntity`) ed entity→DTO, espone `GetAllAsync`, `GetSummariesAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`
+13) **Commenti obbligatori sulle funzioni principali** (provider, service, handler, validator): `///` XML doc di una riga che spieghi il ruolo nel flusso a un dev senior + commento inline su ogni operazione DB — segui `code-organization.instructions.md` Regola 6
 
 ## Scoperta automatica struttura DB via MCP
 
@@ -250,49 +253,81 @@ private static async Task<IResult> GetSummaryHandler(
 
 > **Regola critica — EF traducibilità:** `Projection` deve usare esclusivamente new-initializer con accesso a membri primitivi (`e.Id`, `e.Nome`, ecc.). Chiamate a metodi extension (es. `e.ToDto()`) NON sono EF-traducibili e causano valutazione client-side silente (full table scan in memoria).
 
-### Service layer (opzionale — quando la logica cresce)
+### Ottimizzazione EF (obbligatoria)
 
-Il `Service` si interpone tra endpoint e provider. L'handler conosce solo il Service — non il provider, non le Projection.
+Il pattern Filter + Projection esiste per generare SQL minimo. Verifica sempre:
+
+- **SELECT ridotta**: la `Projection` determina le colonne — il SQL generato contiene solo i campi del DTO richiesto. `<Entity>SummaryDto.Projection` → SELECT delle sole colonne del Summary. Mai materializzare l'entity per poi mappare in memoria.
+- **WHERE solo sui filtri valorizzati**: ogni predicato in `ToExpression()` segue il pattern `(Campo == null || e.Campo <op> Campo)` — EF parametrizza e il query optimizer scarta i rami con filtro null. Nessun `if` di composizione query nel provider.
+- **Mai GetAll senza filtro**: il provider accetta sempre `<Entity>Filter`; filtro vuoto = tutti i predicati null = nessuna restrizione, ma la firma resta filtrata.
+- **Tracking**: `UseQueryTrackingBehavior(NoTracking)` come default nel DbContext; le letture restano no-tracking; `Update`/`Delete` usano `.AsTracking()` esplicito — senza tracking `SaveChanges` non rileva le modifiche.
+
+### Service layer (obbligatorio per CRUD di entità)
+
+Il `Service` (`Services/<Entity>Service.cs`) si interpone tra endpoint e provider. L'handler conosce solo il Service — non il provider, non le Projection. Il Service sceglie la Projection per caso d'uso e centralizza il mapping request→entity ed entity→DTO.
 
 ```csharp
 // Services/<Entity>Service.cs
-public class ModelKitService(ModelKitProvider provider)
+/// <summary>Application service for ModelKits: handlers depend on this, never on the provider.</summary>
+public class ModelKitService(ModelKitsProvider provider)
 {
-    public Task<IEnumerable<ModelKitDto>> GetAllAsync(ModelKitFilter filter, CancellationToken ct) =>
-        provider.GetAsync(filter, ModelKitDto.Projection, ct);
+    /// <summary>Returns the ModelKits matching the filter, projected to the full DTO.</summary>
+    public Task<List<ModelKitDto>> GetAllAsync(ModelKitFilter filter, CancellationToken cancellationToken) =>
+        provider.GetModelKitAsync(filter, ModelKitDto.Projection, cancellationToken);
 
-    public Task<IEnumerable<ModelKitSummaryDto>> GetSummariesAsync(ModelKitFilter filter, CancellationToken ct) =>
-        provider.GetAsync(filter, ModelKitSummaryDto.Projection, ct);
+    /// <summary>Returns the ModelKits matching the filter, projected to the reduced DTO (optimized SELECT).</summary>
+    public Task<List<ModelKitSummaryDto>> GetSummariesAsync(ModelKitFilter filter, CancellationToken cancellationToken) =>
+        provider.GetModelKitAsync(filter, ModelKitSummaryDto.Projection, cancellationToken);
 
-    public Task<ModelKitDto?> GetByIdAsync(int id, CancellationToken ct) =>
-        provider.GetByIdAsync(id, ct);
+    /// <summary>Returns the ModelKit with the given Id, or null if not found.</summary>
+    public Task<ModelKitDto?> GetByIdAsync(int id, CancellationToken cancellationToken) =>
+        provider.GetModelKitByIdAsync(id, ModelKitDto.Projection, cancellationToken);
 
-    public Task<ModelKitDto> CreateAsync(SaveModelKitRequest request, CancellationToken ct) =>
-        provider.CreateAsync(request, ct);
+    /// <summary>Creates a new ModelKit from the validated request and returns the persisted DTO.</summary>
+    public async Task<ModelKitDto> CreateAsync(ModelKitRequest request, CancellationToken cancellationToken)
+    {
+        var created = await provider.CreateModelKitAsync(ToEntity(request), cancellationToken);
+        return new ModelKitDto(created.Id, created.Descrizione, created.Marca, created.DataRegistrazione);
+    }
 
-    public Task<ModelKitDto?> UpdateAsync(int id, SaveModelKitRequest request, CancellationToken ct) =>
-        provider.UpdateAsync(id, request, ct);
+    /// <summary>Updates the ModelKit with the given Id. False if it does not exist.</summary>
+    public Task<bool> UpdateAsync(int id, ModelKitRequest request, CancellationToken cancellationToken)
+    {
+        var entity = ToEntity(request);
+        entity.Id = id;
+        return provider.UpdateModelKitAsync(entity, cancellationToken);
+    }
 
-    public Task<bool> DeleteAsync(int id, CancellationToken ct) =>
-        provider.DeleteAsync(id, ct);
+    /// <summary>Deletes the ModelKit with the given Id. False if it does not exist.</summary>
+    public Task<bool> DeleteAsync(int id, CancellationToken cancellationToken) =>
+        provider.DeleteModelKitAsync(id, cancellationToken);
+
+    /// <summary>Maps a validated request to the entity (request fields are guaranteed by the validator).</summary>
+    private static ModelKit ToEntity(ModelKitRequest request) => new()
+    {
+        Descrizione = request.Descrizione!,
+        Marca = request.Marca,
+        DataRegistrazione = request.DataRegistrazione!.Value
+    };
 }
 
 // Handler — inietta Service, non Provider
-private static async Task<IResult> GetAllHandler(
+/// <summary>Returns the ModelKits matching the optional filters; 404 ProblemDetails when none.</summary>
+private static async Task<IResult> GetListHandler(
     [AsParameters] ModelKitFilter filter,
     ModelKitService service,
-    CancellationToken ct)
+    CancellationToken cancellationToken)
 {
-    var result = await service.GetAllAsync(filter, ct);
+    var result = await service.GetAllAsync(filter, cancellationToken);
     // ...
 }
 
 // Program.cs — registra entrambi
-builder.Services.AddScoped<ModelKitProvider>();
+builder.Services.AddScoped<ModelKitsProvider>();   // o tramite Add<Provider>Provider(configuration)
 builder.Services.AddScoped<ModelKitService>();
 ```
 
-> **Quando introdurre il Service:** logica condivisa tra handler, autorizzazione/tenant, composizione da più provider, side-effect. Non introdurre solo per delegation pura.
+> **Implementazione di riferimento:** `src/test-guideline.api/` — `Infrastructure/ModelKits/` (entity, DbContext, filter, provider), `Services/ModelKitService.cs`, `Dto/ModelKitDto.cs`, `Endpoints/ModelKitsMapping.cs`.
 
 ---
 
@@ -377,7 +412,11 @@ builder.Services.AddScoped<ModelKitService>();
 - [ ] Metadata OpenAPI completi (Produces, Summary, Description, Name)
 - [ ] Transformer AddDocumentInformations creato e registrato
 - [ ] Program.cs chiama MapOpenApi prima dei Map*Endpoints
-- [ ] GET list: `<Entity>Filter.cs` in `Infrastructure/Provider/Filters/` con `ToExpression()`, ogni DTO ha `static Projection`, provider usa `GetAsync<TDto>(filter, selector, ct)`, handler passa `MyDto.Projection`
+- [ ] GET list: `<Entity>Filter.cs` in `Infrastructure/Provider/Filters/` con `ToExpression()`, ogni DTO ha `static Projection`, provider usa `Get<Entity>Async<TDto>(filter, selector, ct)`
+- [ ] DTO multipli: `<Entity>Dto` completo + `<Entity>SummaryDto` ridotto, endpoint `GET /` e `GET /summary`
+- [ ] Service layer: `Services/<Entity>Service.cs` creato e registrato; handler iniettano solo il Service
+- [ ] EF: SELECT con sole colonne del DTO (Projection), WHERE con soli filtri valorizzati (ToExpression), `AsTracking()` su Update/Delete
+- [ ] Commenti: `///` su provider/service/handler/validator + inline su operazioni DB (code-organization Regola 6)
 - [ ] POST/PUT/PATCH: validator creato in `Validators/`, registrato in DI, chiamato nel handler prima della logica
 - [ ] HealthMapping.cs creato con `/health` (MapHealthChecks) e `GET /api/v1/status` (versioned, in Scalar)
 - [ ] File .http aggiunto per endpoint nuovi
@@ -396,5 +435,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v1.7 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-05-29 — claude-sonnet-4-6
+*Template v1.8 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-06-10 — claude-fable-5
 
