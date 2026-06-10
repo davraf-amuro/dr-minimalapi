@@ -65,8 +65,8 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
    - Chiamata handler: tramite Service (vedi regola 12) — il Service passa `MyDto.Projection` al provider
 10) Ogni input esterno (body POST/PUT/PATCH **e filtri query dei GET**): valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
 11) Ogni nuovo progetto include `HealthMapping.cs` con: `MapHealthChecks("/health")` (infrastruttura, non in Scalar) + `GET /api/v1/status` versioned (consumer-facing, in Scalar)
-12) **Service layer obbligatorio per il CRUD di entità**: classe `Services/<Entity>Service.cs` tra handler e provider. Gli handler iniettano **solo il Service** — mai il provider, mai le Projection. Il Service: sceglie la Projection per ogni caso d'uso, mappa request→entity (metodo privato `ToEntity`) ed entity→DTO, espone `GetAllAsync`, `GetSummariesAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`
-13) **Commenti obbligatori sulle funzioni principali e su funzioni complesse** (provider, service, handler, validator): `///` XML doc di una riga che spieghi il ruolo nel flusso a un dev senior + commento inline su ogni operazione DB — segui `code-organization.instructions.md` Regola 6
+12) **Service layer obbligatorio per il CRUD di entità**: classe `Services/<Entity>Service.cs` tra handler e provider. Gli handler iniettano **solo il Service** — mai il provider, mai le Projection. Il Service riceve il provider via primary constructor (DI). Il Service: sceglie la Projection per ogni caso d'uso, mappa request→entity (metodo privato `ToEntity`) ed entity→DTO, espone `GetAllAsync`, `GetSummariesAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`
+13) **Commenti obbligatori** (provider, service, handler, validator): `///` XML doc di una riga che spieghi il ruolo nel flusso a un dev senior + commento inline su ogni operazione DB — segui `code-organization.instructions.md` Regola 6. Casi obbligatori: (a) tutti i `public` method; (b) provider/service/handler/validator indipendentemente dallo scope; (c) logica con predicati composti o query composition. Esclusi: getter/setter banali, wrapper di una riga.
 
 ## Scoperta automatica struttura DB via MCP
 
@@ -92,6 +92,16 @@ Se MCP db-schema non è configurato: comportamento standard (chiedi i campi all'
 ---
 
 ## Pattern richiesti (copiabili)
+
+### ApiVersionFactory
+
+```csharp
+// Properties/ApiVersionFactory.cs
+public static class ApiVersionFactory
+{
+    public static readonly ApiVersion Version1 = new(1, 0);
+}
+```
 
 ### Extension method + group (pattern starter: HealthMapping)
 ```csharp
@@ -396,6 +406,7 @@ builder.Services.AddScoped<ModelKitService>();
 ```
 
 ## Errori comuni (rapidi)
+- Model binding: path/query parameter non convertibile al tipo atteso (es. stringa su campo `int`) ritorna HTTP 400 automaticamente — nessuna validazione custom richiesta per il tipo
 - Version reader non UrlSegmentApiVersionReader => errore su MapToApiVersion
 - Route senza api/v{version:apiVersion}/... => 404 o no route match
 - Mancata MapToApiVersion => versione richiesta ma non specificata
