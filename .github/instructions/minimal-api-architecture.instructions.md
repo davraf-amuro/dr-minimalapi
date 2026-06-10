@@ -13,7 +13,7 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 - Asp.Versioning.Mvc.ApiExplorer (obbligatorio per Scalar)
 - Serilog
 - Entity Framework Core 10: se già presente nel `.csproj`, dichiaralo e prosegui senza chiedere. Chiedi solo se assente.
-- SimpleAuthenticationTools (API Key): chiedere prima di aggiungere il pacchetto
+- Autenticazione/autorizzazione: **solo se esplicitamente richiesta dal developer** — nessun pattern auth di default. SimpleAuthenticationTools (API Key): chiedere prima di aggiungere il pacchetto
 - Aggiungi sempre il file launchSettings.json con configurazione per IIS Express e Kestrel
 - Aggiungi sempre il file appsettings.local.json, aggiungi la chiamata in program.cs, e ignora il file in .gitignore
 - Aggiungi sempre `.vscode/launch.json` e `.vscode/tasks.json` con profili debug `coreclr`
@@ -60,9 +60,10 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
    - Ogni DTO record espone `static Expression<Func<TEntity, TDto>> Projection => e => new(...)` — EF-traducibile
    - **DTO multipli obbligatori**: per ogni entity genera almeno due DTO record con Projection — `<Entity>Dto` completo (tutti i campi) e `<Entity>SummaryDto` ridotto (chiave + campi identificativi). Esponi `GET /` con il DTO completo e `GET /summary` con il ridotto — stesso filter, stesso provider, selector diverso
    - Handler usa `[AsParameters]` se filtro ha ≥ 2 campi
+   - Il filtro ha sempre un validator `<Entity>FilterValidator : IValidator<<Entity>Filter>` con regole **ereditate dai metadati dell'entità** (es. `varchar(50)` → maxLength 50); l'handler valida prima della query → 400; `Produces(400)` anche sui GET con filtro. Vedi `input-validation.instructions.md`
    - Provider: `Get<Entity>Async<TDto>(<Entity>Filter filter, Expression<Func<TEntity, TDto>> selector, CancellationToken ct)` — mai GetAllAsync senza filtro
    - Chiamata handler: tramite Service (vedi regola 12) — il Service passa `MyDto.Projection` al provider
-10) POST/PUT/PATCH con body: valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
+10) Ogni input esterno (body POST/PUT/PATCH **e filtri query dei GET**): valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
 11) Ogni nuovo progetto include `HealthMapping.cs` con: `MapHealthChecks("/health")` (infrastruttura, non in Scalar) + `GET /api/v1/status` versioned (consumer-facing, in Scalar)
 12) **Service layer obbligatorio per il CRUD di entità**: classe `Services/<Entity>Service.cs` tra handler e provider. Gli handler iniettano **solo il Service** — mai il provider, mai le Projection. Il Service: sceglie la Projection per ogni caso d'uso, mappa request→entity (metodo privato `ToEntity`) ed entity→DTO, espone `GetAllAsync`, `GetSummariesAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`
 13) **Commenti obbligatori sulle funzioni principali** (provider, service, handler, validator): `///` XML doc di una riga che spieghi il ruolo nel flusso a un dev senior + commento inline su ogni operazione DB — segui `code-organization.instructions.md` Regola 6
@@ -435,5 +436,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v1.8 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-06-10 — claude-fable-5
+*Template v1.9 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-06-10 — claude-fable-5
 
