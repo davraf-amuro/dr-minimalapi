@@ -66,7 +66,7 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 10) Ogni input esterno (body POST/PUT/PATCH **e filtri query dei GET**): valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
 11) Ogni nuovo progetto include `HealthMapping.cs` con: `MapHealthChecks("/health")` (infrastruttura, non in Scalar) + `GET /api/v1/status` versioned (consumer-facing, in Scalar)
 12) **Service layer obbligatorio per il CRUD di entità**: classe `Services/<Entity>Service.cs` tra handler e provider. Gli handler iniettano **solo il Service** — mai il provider, mai le Projection. Il Service: sceglie la Projection per ogni caso d'uso, mappa request→entity (metodo privato `ToEntity`) ed entity→DTO, espone `GetAllAsync`, `GetSummariesAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`
-13) **Commenti obbligatori sulle funzioni principali** (provider, service, handler, validator): `///` XML doc di una riga che spieghi il ruolo nel flusso a un dev senior + commento inline su ogni operazione DB — segui `code-organization.instructions.md` Regola 6
+13) **Commenti obbligatori sulle funzioni principali e su funzioni complesse** (provider, service, handler, validator): `///` XML doc di una riga che spieghi il ruolo nel flusso a un dev senior + commento inline su ogni operazione DB — segui `code-organization.instructions.md` Regola 6
 
 ## Scoperta automatica struttura DB via MCP
 
@@ -222,13 +222,13 @@ public async Task<IEnumerable<TDto>> GetAsync<TDto>(
         .ToListAsync(ct);
 
 // Handler — in *Mapping.cs
-// Passare sempre una Projection statica del DTO — non costruire expression inline nell'handler
+// L'handler inietta il Service (regola 12) — non il provider, non le Projection
 private static async Task<IResult> GetHandler(
     [AsParameters] ModelKitFilter filter,
-    ModelKitProvider provider,
+    ModelKitService service,
     CancellationToken ct)
 {
-    var result = await provider.GetAsync(filter, ModelKitDto.Projection, ct);
+    var result = await service.GetAllAsync(filter, ct);
     if (!result.Any())
         return TypedResults.Problem(new ProblemDetails
         {
@@ -240,13 +240,13 @@ private static async Task<IResult> GetHandler(
     return TypedResults.Ok(result);
 }
 
-// Handler con DTO parziale — stesso provider, selector diverso
+// Handler con DTO parziale — stesso service, metodo diverso
 private static async Task<IResult> GetSummaryHandler(
     [AsParameters] ModelKitFilter filter,
-    ModelKitProvider provider,
+    ModelKitService service,
     CancellationToken ct)
 {
-    var result = await provider.GetAsync(filter, ModelKitSummaryDto.Projection, ct);
+    var result = await service.GetSummariesAsync(filter, ct);
     // ...
     return TypedResults.Ok(result);
 }
