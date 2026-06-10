@@ -25,7 +25,7 @@ Analizza le classi in Endpoints/ e genera un documento per ogni group (MapGroup)
 4. Flusso endpoint: diagrammi essenziali
    - Ignora auth/validation
    - Ignora dettagli query
-   - Mostra: Endpoint -> Provider/Service -> Entity -> DTO -> Response
+   - Mostra: Endpoint -> Service -> Provider -> Entity -> DTO (Projection) -> Response
 5. Esempi: se esistono file .http, cita "Per i casi d'uso fare riferimento a <elenco_file_http>"
 6. Ultimo aggiornamento: footer con data
 
@@ -44,4 +44,4 @@ La versione template e in fondo a questo file.
 - [ ] Riferimenti a file .http se presenti
 - [ ] Footer con data e LLM
 
-*Template v1.2 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-03-17 21:28
+*Template v1.3 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-06-10 — claude-fable-5

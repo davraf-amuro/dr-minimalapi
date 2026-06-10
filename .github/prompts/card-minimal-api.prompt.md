@@ -13,9 +13,11 @@ Genera la scheda riassuntiva per un progetto Minimal API. Non inventare dati. La
 
 ## Analisi da eseguire
 - `.csproj`, `appsettings*.json`, `launchSettings.json`
-- `Program.cs`: versioning, OpenAPI, MapGroup registrati
+- `Program.cs`: versioning, OpenAPI, MapGroup registrati, registrazioni Service/Provider/Validator
 - `Endpoints/*.cs`: MapGroup, route base, tag Scalar, versione API
-- `DbContext`, provider/repository, using statements
+- `Services/*.cs`: service per entità (handler → Service → Provider)
+- `Infrastructure/*/`: DbContext, provider, `Entities/`, `Filters/` (`ToExpression()`)
+- `Dto/*.cs`: record con `static Projection`
 
 ## Template card
 ```markdown
@@ -30,7 +32,7 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - **Workspace:** [NomeWorkspace.code-workspace]
 - **Repository:** [URL senza branch]
 - **Tipo Applicazione:** Minimal API (.NET 10)
-- **Pattern Architetturale:** Minimal API + Provider + Scalar
+- **Pattern Architetturale:** Minimal API + Service + Provider + Scalar
 - **Versione Corrente:**
 - **Owner/Team:**
 - **Contatto Supporto:** dev-support@unidata.it
@@ -99,4 +101,4 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - [ ] Nessun segreto esposto
 - [ ] Footer con data e LLM presente
 
-*Template v1.1 - .NET 10 Minimal API - Token-optimized for AI agents* - Last Update 2026-06-04 — claude-sonnet-4-6
+*Template v1.2 - .NET 10 Minimal API - Token-optimized for AI agents* - Last Update 2026-06-10 — claude-fable-5
