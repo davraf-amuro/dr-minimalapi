@@ -35,6 +35,7 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - **Pattern Architetturale:** Minimal API + Service + Provider + Scalar
 - **Versione Corrente:**
 - **Owner/Team:**
+- **Referente:** [nome referente]
 - **Contatto Supporto:** dev-support@unidata.it
 
 ## Stack Tecnologico
@@ -71,8 +72,8 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 
 ## Configurazione e Hosting
 - **Entrypoint:** `src/<progetto>/Program.cs`
-- **Deploy:** [locale | Docker | Swarm Portainer | ...]
-- **URL Produzione:**
+- **Ambiente Test:** [percorso fisico | nome server | stack Portainer/Swarm | non pubblicato]
+- **Ambiente Produzione:** [percorso fisico | nome server | stack Portainer/Swarm | non pubblicato]
 - **URL Scalar (dev):** [porta da launchSettings.json]
 
 ## Documentazione API
@@ -88,6 +89,7 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - Non inventare dati; campi senza info restano vuoti
 - Tabelle senza dati: lascia solo header
 - Info sensibili: indica solo il nome variabile, mai il valore
+- `Referente`, `Ambiente Test` e `Ambiente Produzione` non possono essere vuoti: se l'utente non fornisce il dato, usa `non pubblicato`
 - Endpoint Groups: ricava route base e tag da `WithTags` e `MapGroup` nei file `Endpoints/*.cs`
 - Se il progetto non ha servizi esterni, ometti la sezione
 - Risposta del prompt: indica solo la card generata, non riepilogare i dati
@@ -100,5 +102,8 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - [ ] URL Scalar ricavato da launchSettings.json
 - [ ] Nessun segreto esposto
 - [ ] Footer con data e LLM presente
+- [ ] Referente compilato
+- [ ] Ambiente Test compilato (o `non pubblicato`)
+- [ ] Ambiente Produzione compilato (o `non pubblicato`)
 
-*Template v1.2 - .NET 10 Minimal API - Token-optimized for AI agents* - Last Update 2026-06-10 — claude-fable-5
+*Template v1.3 - .NET 10 Minimal API - Token-optimized for AI agents* - Last Update 2026-06-12 — claude-sonnet-4-6
