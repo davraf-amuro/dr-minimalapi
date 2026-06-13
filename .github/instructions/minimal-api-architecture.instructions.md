@@ -11,13 +11,24 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 - Tinyhelpers.AspNetCore (installare sempre)
 - Scalar per docs (no Swagger UI)
 - Asp.Versioning.Mvc.ApiExplorer (obbligatorio per Scalar)
-- Serilog
+- Serilog (opzionale — chiedi in fase di raccolta informazioni; se confermato, segui sezione "Serilog — configurazione completa")
 - Entity Framework Core 10: se già presente nel `.csproj`, dichiaralo e prosegui senza chiedere. Chiedi solo se assente.
 - Autenticazione/autorizzazione: **solo se esplicitamente richiesta dal developer** — nessun pattern auth di default. SimpleAuthenticationTools (API Key): chiedere prima di aggiungere il pacchetto
 - Aggiungi sempre il file launchSettings.json con configurazione per IIS Express e Kestrel
 - Aggiungi sempre il file appsettings.local.json, aggiungi la chiamata in program.cs, e ignora il file in .gitignore
 - Aggiungi sempre `.vscode/launch.json` e `.vscode/tasks.json` con profili debug `coreclr`
 - Dati sensibili: segui sempre `sensitive-data.instructions.md`
+
+## Raccolta informazioni iniziale (gate obbligatorio)
+
+Prima di creare qualsiasi file, raccogli tutto in **un unico messaggio**, nell'ordine:
+
+1. **Nome entità + campi** — se il task coinvolge un'entità e non sono specificati
+2. **Nome progetto** — se non ricavabile dal contesto: proponi `<nomecartella>.api` in lowercase come default (es. cartella `test-test/` → proponi `test-test.api`) e attendi conferma. **Non inventare e non procedere senza risposta.**
+3. **Serilog** — chiedi se aggiungere Serilog. Se sì: configura scrittura su file + console (vedi sezione "Serilog — configurazione completa"). Se no: usa `ILogger` built-in di ASP.NET Core.
+4. **Connessione DB** — solo se MCP db-schema attivo e sono disponibili più connessioni
+
+Regola assoluta: se il nome progetto non è ricavabile né confermato, **fermati**. Non inferire, non usare placeholder come `MyApi` o `WebApi`.
 
 ## Vietato
 - MVC Controllers
@@ -53,7 +64,13 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 3) Usa route group con WithTags + WithApiVersionSet + MapToApiVersion
 4) Versioning: UrlSegmentApiVersionReader + ApiExplorer GroupNameFormat='v'VVV + SubstituteApiVersionInUrl=true
 5) Parametri handler: route -> query (o [AsParameters] se >2) -> body -> servizi DI -> CancellationToken ultimo
-6) OpenAPI metadata completo: Produces + WithSummary + WithDescription + WithName
+6) OpenAPI metadata completo — **ogni endpoint** richiede obbligatoriamente:
+   - `WithSummary("...")` — descrizione breve (max 10 parole)
+   - `WithDescription("...")` — descrizione estesa per i consumer
+   - `WithTags("...")` — gruppo logico (uguale per tutti gli endpoint della stessa entità)
+   - `WithName("<Verbo><Risorsa>")` — convention: `Get<Entity>List`, `Get<Entity>By<Key>`, `Post<Entity>`, `Put<Entity>`, `Delete<Entity>`
+   - `Produces<T>(StatusCode)` per ogni `TypedResults` restituito — inclusi 400 e 404 ove applicabile
+   - Endpoint senza questi metadata = non accettabile (Scalar muto per i consumer)
 7) Program.cs deve chiamare gli extension methods dopo MapOpenApi
 8) Transformer OpenAPI: classe AddDocumentInformations in Transformers/ + registrazione AddOpenApi
 9) GET list con provider: filtro dedicato obbligatorio su tutti i campi entità; proiezione EF-traducibile via `Expression<Func<TEntity, TDto>>`; ProblemDetails 404 se vuoto.
@@ -96,6 +113,52 @@ Se nel progetto è configurato un MCP server `db-schema` (verifica in `.claude/s
    - Non chiedere regole all'utente: genera subito, codice compilabile e funzionante.
 
 Se MCP db-schema non è configurato: comportamento standard (chiedi i campi all'utente prima di procedere).
+
+---
+
+## Serilog — configurazione completa
+
+Applica solo se confermato nella raccolta informazioni iniziale.
+
+**Pacchetti NuGet da aggiungere:**
+```
+Serilog.AspNetCore
+Serilog.Sinks.File
+Serilog.Sinks.Console
+```
+
+**Program.cs — configurazione (prima di `builder.Build()`):**
+```csharp
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: "logs/log-.txt",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"));
+```
+
+**appsettings.json — sezione Serilog:**
+```json
+"Serilog": {
+  "MinimumLevel": {
+    "Default": "Information",
+    "Override": {
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information",
+      "System": "Warning"
+    }
+  }
+}
+```
+
+**Cartella logs — aggiungere a `.gitignore`:**
+```
+logs/
+```
 
 ---
 
@@ -429,7 +492,7 @@ builder.Services.AddScoped<ModelKitService>();
 - [ ] Route group usa WithTags + WithApiVersionSet + MapToApiVersion
 - [ ] URL formato api/v{version:apiVersion}/{gruppo}/{comando?}
 - [ ] Versioning configurato con UrlSegmentApiVersionReader + ApiExplorer
-- [ ] Metadata OpenAPI completi (Produces, Summary, Description, Name)
+- [ ] Metadata OpenAPI completi per ogni endpoint: `WithSummary`, `WithDescription`, `WithTags`, `WithName(<Verbo><Risorsa>)`, tutti i `TypedResults` in `Produces`
 - [ ] Transformer AddDocumentInformations creato e registrato
 - [ ] Program.cs chiama MapOpenApi prima dei Map*Endpoints
 - [ ] GET list: `<Entity>Filter.cs` in `Infrastructure/Provider/Filters/` con `ToExpression()`, ogni DTO ha `static Projection`, provider usa `Get<Entity>Async<TDto>(filter, selector, ct)`
@@ -442,6 +505,7 @@ builder.Services.AddScoped<ModelKitService>();
 - [ ] File .http aggiunto per endpoint nuovi
 - [ ] `.vscode/launch.json` e `tasks.json` creati con `type: coreclr`
 - [ ] `appsettings.json` contiene solo valori fake/placeholder per dati sensibili, mai credenziali reali
+- [ ] Se Serilog confermato: `UseSerilog` in Program.cs, sezione `Serilog` in appsettings.json, `logs/` in .gitignore
 
 ## 🎯 Criteri di successo (verificare prima di iniziare)
 
@@ -455,5 +519,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v1.9 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-06-10 — claude-fable-5
+*Template v2.0 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-06-13 — claude-sonnet-4-6
 
