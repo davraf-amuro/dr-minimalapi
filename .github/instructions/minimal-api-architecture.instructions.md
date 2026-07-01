@@ -248,9 +248,9 @@ public class AddDocumentInformations : IOpenApiDocumentTransformer
         document.Info.Version = "v1";
         document.Info.Contact = new OpenApiContact
         {
-            Name = "Voisoft per Unidata spa, @ <Year>",
-            Url = new Uri("https://www.twt.it/"),
-            Email = "tron@twt.it"
+            Name = "<Organizzazione>, @ <Year>",
+            Url = new Uri("https://<dominio>/"),
+            Email = "<email-contatto>"
         };
 
         return Task.CompletedTask;

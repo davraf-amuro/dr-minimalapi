@@ -31,7 +31,7 @@ Analizza le classi in Endpoints/ e genera un documento per ogni group (MapGroup)
 6. Ultimo aggiornamento: footer con data
 
 ## Footer
-Usa data e ora correnti (Get-Date -Format "yyyy-MM-dd HH:mm"):
+Usa data e ora correnti nel formato `YYYY-MM-DD HH:MM` (fuso locale):
 ```markdown
 ---
 *Revisione v1.0 — {YYYY-MM-DD HH:MM} — {modello-llm}*
