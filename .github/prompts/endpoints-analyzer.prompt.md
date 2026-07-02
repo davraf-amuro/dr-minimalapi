@@ -11,7 +11,7 @@ Analizza le classi in Endpoints/ e genera un documento per ogni group (MapGroup)
 ## Output
 - Crea docs/ se non esiste
 - Un file per group: docs/endpoint-<group_name>.md (sovrascrivi se esiste)
-- Se esiste solution (.sln/.slnx), aggiungi riferimenti ai nuovi file
+- Non modificare file solution (.sln/.slnx): i documenti generati vivono solo in docs/
 
 ## Regole di contenuto
 - Usa informazioni OpenAPI se presenti; non inventare
@@ -45,4 +45,4 @@ La versione template e in fondo a questo file.
 - [ ] Riferimenti a file .http se presenti
 - [ ] Footer con data e LLM
 
-*Template v1.4 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-06-10 — claude-fable-5
+*Template v1.5 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-07-02 00:03 — claude-fable-5

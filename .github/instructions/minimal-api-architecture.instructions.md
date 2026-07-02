@@ -127,33 +127,7 @@ Serilog.Sinks.File
 Serilog.Sinks.Console
 ```
 
-**Program.cs — configurazione (prima di `builder.Build()`):**
-```csharp
-builder.Host.UseSerilog((context, services, configuration) => configuration
-    .ReadFrom.Configuration(context.Configuration)
-    .ReadFrom.Services(services)
-    .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.File(
-        path: "logs/log-.txt",
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 30,
-        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"));
-```
-
-**appsettings.json — sezione Serilog:**
-```json
-"Serilog": {
-  "MinimumLevel": {
-    "Default": "Information",
-    "Override": {
-      "Microsoft": "Warning",
-      "Microsoft.Hosting.Lifetime": "Information",
-      "System": "Warning"
-    }
-  }
-}
-```
+**Configurazione (Program.cs, template di output, enrichers ThreadId/TaskId):** segui `logging.instructions.md` — è la **fonte unica** della configurazione Serilog. Non duplicare qui varianti alternative: due configurazioni divergenti per lo stesso stack generano codice incoerente.
 
 **Cartella logs — aggiungere a `.gitignore`:**
 ```
@@ -425,7 +399,7 @@ builder.Services.AddScoped<ModelKitService>();
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/src/<project>/bin/net10.0/<project>.dll",
+      "program": "${workspaceFolder}/src/<project>/bin/Debug/net10.0/<project>.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/<project>",
       "stopAtEntry": false,
@@ -439,7 +413,7 @@ builder.Services.AddScoped<ModelKitService>();
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/src/<project>/bin/net10.0/<project>.dll",
+      "program": "${workspaceFolder}/src/<project>/bin/Debug/net10.0/<project>.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/<project>",
       "stopAtEntry": false,
@@ -452,7 +426,7 @@ builder.Services.AddScoped<ModelKitService>();
 }
 ```
 
-> **Nota:** Il percorso `bin/net10.0/` si applica quando `Directory.Build.props` setta `<OutputPath>bin\$(Configuration)\</OutputPath>`. Senza override, il percorso standard .NET è `bin/Debug/net10.0/`.
+> **Nota:** Il percorso di `program` dipende da `OutputPath`: default standard .NET = `bin/Debug/<tfm>/`. Se `Directory.Build.props` o il csproj sovrascrivono `<OutputPath>`, leggi il valore reale e calcola il percorso di conseguenza. Con Claude Code la generazione guidata di questi file è disponibile via skill `CreateLaunchProfiles` (stesso percorso di default).
 
 **tasks.json**:
 ```json
@@ -505,7 +479,7 @@ builder.Services.AddScoped<ModelKitService>();
 - [ ] File .http aggiunto per endpoint nuovi
 - [ ] `.vscode/launch.json` e `tasks.json` creati con `type: coreclr`
 - [ ] `appsettings.json` contiene solo valori fake/placeholder per dati sensibili, mai credenziali reali
-- [ ] Se Serilog confermato: `UseSerilog` in Program.cs, sezione `Serilog` in appsettings.json, `logs/` in .gitignore
+- [ ] Se Serilog confermato: configurazione conforme a `logging.instructions.md` (fonte unica), `logs/` in .gitignore
 
 ## 🎯 Criteri di successo (verificare prima di iniziare)
 
@@ -519,5 +493,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.0 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-06-13 — claude-sonnet-4-6
+*Template v2.1 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-07-02 00:03 — claude-fable-5
 
