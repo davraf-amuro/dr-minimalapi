@@ -36,7 +36,7 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - **Versione Corrente:**
 - **Owner/Team:**
 - **Referente:** [nome referente]
-- **Contatto Supporto:** dev-support@unidata.it
+- **Contatto Supporto:** [email-supporto]
 
 ## Stack Tecnologico
 - **Linguaggio Principale:** C# 14
