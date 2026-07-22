@@ -84,6 +84,7 @@ Regola assoluta: se il nome progetto non è ricavabile né confermato, **fermati
    - Filter class: `Infrastructure/Provider/Filters/<Entity>Filter.cs` — espone `ToExpression()` che ritorna `Expression<Func<TEntity, bool>>`
    - Ogni DTO record espone `static Expression<Func<TEntity, TDto>> Projection => e => new(...)` — EF-traducibile
    - **DTO multipli obbligatori**: per ogni entity genera almeno due DTO record con Projection — `<Entity>Dto` completo (tutti i campi) e `<Entity>SummaryDto` ridotto (chiave + campi identificativi). Esponi `GET /` con il DTO completo e `GET /summary` con il ridotto — stesso filter, stesso provider, selector diverso
+   - **Ogni DTO record in file separato**: `Dto/<Entity>Dto.cs` e `Dto/<Entity>SummaryDto.cs` — mai due record nello stesso file, anche se correlati (segui `code-organization.instructions.md` Regola 1, vale anche per i record)
    - Handler usa `[AsParameters]` se filtro ha ≥ 2 campi
    - Il filtro ha sempre un validator `<Entity>FilterValidator : IValidator<<Entity>Filter>` con regole **ereditate dai metadati dell'entità** (es. `varchar(50)` → maxLength 50); l'handler valida prima della query → 400; `Produces(400)` anche sui GET con filtro. Vedi `input-validation.instructions.md`
    - Provider: `Get<Entity>Async<TDto>(<Entity>Filter filter, Expression<Func<TEntity, TDto>> selector, CancellationToken ct)` — mai GetAllAsync senza filtro
@@ -470,7 +471,7 @@ builder.Services.AddScoped<ModelKitService>();
 - [ ] Transformer AddDocumentInformations creato e registrato
 - [ ] Program.cs chiama MapOpenApi prima dei Map*Endpoints
 - [ ] GET list: `<Entity>Filter.cs` in `Infrastructure/Provider/Filters/` con `ToExpression()`, ogni DTO ha `static Projection`, provider usa `Get<Entity>Async<TDto>(filter, selector, ct)`
-- [ ] DTO multipli: `<Entity>Dto` completo + `<Entity>SummaryDto` ridotto, endpoint `GET /` e `GET /summary`
+- [ ] DTO multipli: `<Entity>Dto` completo + `<Entity>SummaryDto` ridotto, endpoint `GET /` e `GET /summary`, ciascuno nel proprio file (`Dto/<Entity>Dto.cs` + `Dto/<Entity>SummaryDto.cs`)
 - [ ] Service layer: `Services/<Entity>Service.cs` creato e registrato; handler iniettano solo il Service
 - [ ] EF: SELECT con sole colonne del DTO (Projection), WHERE con soli filtri valorizzati (ToExpression), `AsTracking()` su Update/Delete
 - [ ] Commenti: `///` su provider/service/handler/validator + inline su operazioni DB (code-organization Regola 6)
@@ -493,5 +494,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.1 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-07-02 00:03 — claude-fable-5
+*Template v2.2 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-07-22 — claude-opus-4-8
 
