@@ -427,7 +427,7 @@ builder.Services.AddScoped<ModelKitService>();
 }
 ```
 
-> **Nota:** Il percorso di `program` dipende da `OutputPath`: default standard .NET = `bin/Debug/<tfm>/`. Se `Directory.Build.props` o il csproj sovrascrivono `<OutputPath>`, leggi il valore reale e calcola il percorso di conseguenza. Con Claude Code la generazione guidata di questi file è disponibile via skill `CreateLaunchProfiles` (stesso percorso di default).
+> **Nota:** Il percorso di `program` dipende da `OutputPath`: default standard .NET = `bin/Debug/<tfm>/`. Se `Directory.Build.props` o il csproj sovrascrivono `<OutputPath>`, leggi il valore reale e calcola il percorso di conseguenza. Con Claude Code la generazione guidata di questi file è disponibile via skill `dr-CreateLaunchProfiles` (stesso percorso di default).
 
 **tasks.json**:
 ```json
