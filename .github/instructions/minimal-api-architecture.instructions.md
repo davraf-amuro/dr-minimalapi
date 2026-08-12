@@ -13,7 +13,7 @@ Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo
 - Asp.Versioning.Mvc.ApiExplorer (obbligatorio per Scalar)
 - Serilog (opzionale — chiedi in fase di raccolta informazioni; se confermato, segui sezione "Serilog — configurazione completa")
 - Entity Framework Core 10: se già presente nel `.csproj`, dichiaralo e prosegui senza chiedere. Chiedi solo se assente.
-- Autenticazione/autorizzazione: **solo se esplicitamente richiesta dal developer** — nessun pattern auth di default. SimpleAuthenticationTools (API Key): chiedere prima di aggiungere il pacchetto
+- Autenticazione/autorizzazione: **solo se esplicitamente richiesta dal developer** — nessun pattern auth di default. Se richiesta, segui la sezione "Autenticazione": lo schema dipende dal tipo di client, non è una scelta libera
 - Aggiungi sempre il file launchSettings.json con configurazione per IIS Express e Kestrel
 - Aggiungi sempre il file appsettings.local.json, aggiungi la chiamata in program.cs, e ignora il file in .gitignore
 - Aggiungi sempre `.vscode/launch.json` e `.vscode/tasks.json` con profili debug `coreclr`
@@ -26,7 +26,8 @@ Prima di creare qualsiasi file, raccogli tutto in **un unico messaggio**, nell'o
 1. **Nome entità + campi** — se il task coinvolge un'entità e non sono specificati
 2. **Nome progetto** — se non ricavabile dal contesto: proponi `<nomecartella>.api` in lowercase come default (es. cartella `test-test/` → proponi `test-test.api`) e attendi conferma. **Non inventare e non procedere senza risposta.**
 3. **Serilog** — chiedi se aggiungere Serilog. Se sì: configura scrittura su file + console (vedi sezione "Serilog — configurazione completa"). Se no: usa `ILogger` built-in di ASP.NET Core.
-4. **Connessione DB** — solo se MCP db-schema attivo e sono disponibili più connessioni
+4. **Autenticazione** — chiedi se il progetto prevede **utenti umani con login** (registrazione, profilo, cambio password). Se sì: applica la sezione "Autenticazione", che determina lo schema in base ai client. Se no: non proporre auth — nessun pacchetto, nessun middleware.
+5. **Connessione DB** — solo se MCP db-schema attivo e sono disponibili più connessioni
 
 Regola assoluta: se il nome progetto non è ricavabile né confermato, **fermati**. Non inferire, non usare placeholder come `MyApi` o `WebApi`.
 
@@ -36,6 +37,7 @@ Regola assoluta: se il nome progetto non è ricavabile né confermato, **fermati
 - IRepository pattern
 - AutoMapper
 - MediatR
+- `AddJwtBearer` per utenti umani, salvo richiesta esplicita e motivata del developer — il JWT non è revocabile prima della scadenza: dopo logout o cambio password il token già emesso resta valido
 
 ## Struttura progetto
 - src/<project>/
@@ -134,6 +136,69 @@ Serilog.Sinks.Console
 ```
 logs/
 ```
+
+---
+
+## Autenticazione
+
+Applica solo se confermato nella raccolta informazioni iniziale. Nessun pattern auth di default: se il developer non l'ha chiesta, non proporla.
+
+Lo schema **non è una scelta libera**: dipende da chi sono i client.
+
+### Matrice di scelta
+
+| Caso | Schema | Pacchetto |
+|---|---|---|
+| Utenti umani, frontend browser sullo stesso dominio dell'API | ASP.NET Identity + cookie `HttpOnly` | `Microsoft.AspNetCore.Identity.EntityFrameworkCore` |
+| Utenti umani, domini diversi oppure client non-browser previsto (app mobile, desktop) | Identity + `AddBearerToken` — token opachi, refresh incluso | `Microsoft.AspNetCore.Identity.EntityFrameworkCore` |
+| Entrambi i tipi di client | Stessi endpoint, si aggiunge solo il secondo schema | `Microsoft.AspNetCore.Identity.EntityFrameworkCore` |
+| Nessun utente umano — sola comunicazione servizio-a-servizio | `SimpleAuthenticationTools` (API Key) | `SimpleAuthenticationTools` |
+| Auth non richiesta | Nessuna | — |
+
+Se il developer non ha detto se ci saranno client non-browser, chiediglielo: è la sola informazione che discrimina tra la prima e la seconda riga.
+
+### Perché Identity
+
+Copre registrazione, login, profilo, cambio password, reset e lockout senza codice a mano. `MapIdentityApi<TUser>()` espone gli endpoint già pronti, incluso `/manage/info` per email e password.
+
+Non scrivere a mano una tabella utenti con hash della password: il codice risparmiato è poco, quello dimenticato — lockout, reset, conferma email, rotazione dei token — è molto.
+
+### Cookie e bearer convivono
+
+`MapIdentityApi<TUser>()` serve entrambi dagli stessi endpoint, sulla stessa anagrafica utenti:
+
+| Chiamata | Risposta | Client |
+|---|---|---|
+| `POST /login?useCookies=true` | `Set-Cookie` `HttpOnly` | frontend browser |
+| `POST /login` | `accessToken` + `refreshToken` opachi | app mobile, client non-browser |
+
+Conseguenza operativa: partire dal cookie non è irreversibile. Quando arriva un client non-browser si aggiunge lo schema bearer senza toccare l'anagrafica utenti e senza migrazioni.
+
+### Cosa evitare, e perché
+
+- **Token in `localStorage`** — leggibile da JavaScript, quindi rubabile con un XSS. Il cookie `HttpOnly` non lo è. Se il bearer è inevitabile, il token sta in memoria e si rinnova col refresh: vedi `frontend-organization.instructions.md`
+- **JWT per utenti umani** — il token è autoconsistente e l'API non lo confronta con nessun archivio. Non esiste revoca: dopo un logout o un cambio password il token già emesso resta valido fino alla scadenza. Vale la pena solo quando il lookup a database è un collo di bottiglia **misurato**, non ipotizzato
+
+### Rilascio in container
+
+Due regole obbligatorie appena un'applicazione containerizzata ha un'auth con cookie o bearer. Entrambe le omissioni si manifestano come guasti intermittenti, non come errori: senza queste righe vengono diagnosticate a lungo come bug applicativi.
+
+**1. Portachiavi Data Protection persistito e condiviso.**
+
+I cookie di Identity e i token opachi di `AddBearerToken` sono cifrati con le chiavi Data Protection. Senza configurazione esplicita finiscono nel filesystem del container, con due conseguenze: ricreare il container invalida ogni sessione (tutti gli utenti sloggati a ogni deploy), e con `replicas > 1` ogni replica ha il proprio portachiavi (il login su una replica non vale sull'altra, quindi 401 a intermittenza).
+
+- Default: `PersistKeysToDbContext<TDbContext>()` — pacchetto `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`, sfrutta il database già presente per Identity
+- Alternativa: `PersistKeysToFileSystem` su un volume montato, quando il database non è disponibile all'avvio
+- In entrambi i casi `SetApplicationName("<nome-applicazione>")` esplicito: le repliche devono condividere lo stesso spazio di chiavi
+
+**2. `UseForwardedHeaders` come primo middleware della pipeline.**
+
+Con TLS terminato sul reverse proxy l'applicazione riceve `http` e considera la connessione non sicura: il cookie `Secure` non viene emesso e i redirect nascono con lo schema sbagliato.
+
+- Inoltra `XForwardedProto` e `XForwardedFor`
+- **Trappola Docker**: di default vengono accettate solo le intestazioni provenienti dal loopback, mentre il reverse proxy arriva dall'indirizzo IP di un altro container. Vanno configurati `KnownNetworks`/`KnownProxies` per la rete Docker, altrimenti le intestazioni sono ignorate senza alcun errore visibile e il rimedio sembra non avere effetto
+
+Identity richiede il database all'avvio: vale anche `database-startup-resilience.instructions.md`. Per il lato stack — volumi, variabili d'ambiente, repliche — vedi `docker-swarm-compose.instructions.md`.
 
 ---
 
@@ -494,5 +559,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.2 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-07-22 — claude-opus-4-8
+*Template v2.3 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-08-12 — claude-opus-5
 
