@@ -449,7 +449,7 @@ builder.Services.AddScoped<ModelKitsProvider>();   // o tramite Add<Provider>Pro
 builder.Services.AddScoped<ModelKitService>();
 ```
 
-> **Implementazione di riferimento:** `src/test-guideline.api/` — `Infrastructure/ModelKits/` (entity, DbContext, filter, provider), `Services/ModelKitService.cs`, `Dto/ModelKitDto.cs`, `Endpoints/ModelKitsMapping.cs`.
+> **Entity, DbContext, filtro, provider e DTO di `ModelKit`.** Controlla `.ai/dr-guidelines-packages.json`: se elenca `dr-efdb`, la fonte unica è `database-provider.instructions.md`, sezione "📖 Esempio di riferimento: ModelKit" — seguila e dichiaralo nell'output. Se non lo elenca, vale il ripiego della regola 9: filtro con campi nullable e `ToExpression()`, DTO record con `static Projection`, provider con `Get<Entity>Async<TDto>(filter, selector, ct)`; dichiara nell'output che stai applicando il ripiego.
 
 ---
 
@@ -559,5 +559,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.3 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-08-12 — claude-opus-5
+*Template v2.4 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimando all'implementazione di riferimento inesistente sostituito da un rimando condizionale a dr-efdb (dr-minimalapi#1)
 
