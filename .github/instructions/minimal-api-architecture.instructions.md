@@ -92,7 +92,7 @@ Regola assoluta: se il nome progetto non è ricavabile né confermato, **fermati
    - Provider: `Get<Entity>Async<TDto>(<Entity>Filter filter, Expression<Func<TEntity, TDto>> selector, CancellationToken ct)` — mai GetAllAsync senza filtro
    - Chiamata handler: tramite Service (vedi regola 12) — il Service passa `MyDto.Projection` al provider
 10) Ogni input esterno (body POST/PUT/PATCH **e filtri query dei GET**): valida con `IValidator<T>` prima di processare; segui `input-validation.instructions.md`
-11) Ogni nuovo progetto include `HealthMapping.cs` con: `MapHealthChecks("/health")` (infrastruttura, non in Scalar) + `GET /api/v1/status` versioned (consumer-facing, in Scalar). Se il progetto dipende dal DB con seed/inizializzazione all'avvio, segui `database-startup-resilience.instructions.md` (avvio resiliente, stato DB, retry, 503 a runtime)
+11) Ogni nuovo progetto include `HealthMapping.cs` con: `MapHealthChecks("/health")` (infrastruttura, non in Scalar) + `GET /api/v1/status` versioned (consumer-facing, in Scalar). Se il progetto dipende dal DB con seed/inizializzazione all'avvio, controlla `.ai/dr-guidelines-packages.json`: se elenca `dr-efdb`, segui `database-startup-resilience.instructions.md` (sezioni "Regole core" e "Contratto endpoint") e dichiaralo nell'output. Se non lo elenca, ripiego: l'applicazione parte anche con il DB irraggiungibile, `/api/v1/status` espone lo stato del DB e le richieste che ne dipendono rispondono 503 finché non è pronto; dichiara nell'output che applichi il ripiego
 12) **Service layer obbligatorio per il CRUD di entità**: classe `Services/<Entity>Service.cs` tra handler e provider. Gli handler iniettano **solo il Service** — mai il provider, mai le Projection. Il Service riceve il provider via primary constructor (DI). Il Service: sceglie la Projection per ogni caso d'uso, mappa request→entity (metodo privato `ToEntity`) ed entity→DTO, espone `GetAllAsync`, `GetSummariesAsync`, `GetByIdAsync`, `CreateAsync`, `UpdateAsync`, `DeleteAsync`
 13) **Commenti obbligatori** (provider, service, handler, validator): `///` XML doc di una riga che spieghi il ruolo nel flusso a un dev senior + commento inline su ogni operazione DB — segui `code-organization.instructions.md` Regola 6. Casi obbligatori: (a) tutti i `public` method; (b) provider/service/handler/validator indipendentemente dallo scope; (c) logica con predicati composti o query composition. Esclusi: getter/setter banali, wrapper di una riga.
 
@@ -176,7 +176,7 @@ Conseguenza operativa: partire dal cookie non è irreversibile. Quando arriva un
 
 ### Cosa evitare, e perché
 
-- **Token in `localStorage`** — leggibile da JavaScript, quindi rubabile con un XSS. Il cookie `HttpOnly` non lo è. Se il bearer è inevitabile, il token sta in memoria e si rinnova col refresh: vedi `frontend-organization.instructions.md`
+- **Token in `localStorage`** — leggibile da JavaScript, quindi rubabile con un XSS. Il cookie `HttpOnly` non lo è. Se il bearer è inevitabile, il token sta in memoria e si rinnova col refresh. Per il lato client controlla `.ai/dr-guidelines-packages.json`: se elenca `dr-fe`, la fonte unica è `frontend-organization.instructions.md`, "Regola 7 — Autenticazione lato frontend"; se non lo elenca, vale come ripiego la riga che precede. Dichiara nell'output quale dei due rami applichi
 - **JWT per utenti umani** — il token è autoconsistente e l'API non lo confronta con nessun archivio. Non esiste revoca: dopo un logout o un cambio password il token già emesso resta valido fino alla scadenza. Vale la pena solo quando il lookup a database è un collo di bottiglia **misurato**, non ipotizzato
 
 ### Rilascio in container
@@ -198,7 +198,11 @@ Con TLS terminato sul reverse proxy l'applicazione riceve `http` e considera la 
 - Inoltra `XForwardedProto` e `XForwardedFor`
 - **Trappola Docker**: di default vengono accettate solo le intestazioni provenienti dal loopback, mentre il reverse proxy arriva dall'indirizzo IP di un altro container. Vanno configurati `KnownNetworks`/`KnownProxies` per la rete Docker, altrimenti le intestazioni sono ignorate senza alcun errore visibile e il rimedio sembra non avere effetto
 
-Identity richiede il database all'avvio: vale anche `database-startup-resilience.instructions.md`. Per il lato stack — volumi, variabili d'ambiente, repliche — vedi `docker-swarm-compose.instructions.md`.
+Identity richiede il database all'avvio: vale l'avvio resiliente della regola 11, con lo stesso rimando condizionale a `dr-efdb`.
+
+Per il lato stack — volumi, variabili d'ambiente, repliche — controlla `.ai/dr-guidelines-packages.json`:
+- se elenca `dr-devops` e il deploy è uno stack Docker Swarm → segui `docker-swarm-compose.instructions.md`, sezione "6. Chiavi Data Protection", e dichiaralo nell'output;
+- se non lo elenca, oppure se il deploy è un container su host singolo (`docker compose up`), che `dr-devops` non copre → ripiego: il portachiavi sta su un volume persistente o nel database e sopravvive alla ricreazione del container; le variabili d'ambiente vengono dalla configurazione e non dal file del compose. Dichiara nell'output che applichi il ripiego.
 
 ---
 
@@ -559,5 +563,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.4 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimando all'implementazione di riferimento inesistente sostituito da un rimando condizionale a dr-efdb (dr-minimalapi#1)
+*Template v2.5 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3)
 
