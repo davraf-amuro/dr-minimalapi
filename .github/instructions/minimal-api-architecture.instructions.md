@@ -454,7 +454,7 @@ builder.Services.AddScoped<ModelKitsProvider>();   // o tramite Add<Provider>Pro
 builder.Services.AddScoped<ModelKitService>();
 ```
 
-> **Entity, DbContext, filtro, provider e DTO di `ModelKit`.** Controlla `.ai/dr-guidelines-packages.json`: se elenca `dr-efdb`, la fonte unica è `database-provider.instructions.md`, sezione "📖 Esempio di riferimento: ModelKit" — seguila e dichiaralo nell'output. Se non lo elenca, vale il ripiego della regola 9: filtro con campi nullable e `ToExpression()`, DTO record con `static Projection`, provider con `Get<Entity>Async<TDto>(filter, selector, ct)`; dichiara nell'output che stai applicando il ripiego.
+> **Entity, DbContext, filtro, provider e DTO di `ModelKit`.** Controlla `.ai/dr-guidelines-packages.json`: se elenca `dr-efdb`, la fonte unica è `database-provider.instructions.md`: sezione "📖 Esempio di riferimento: ModelKit" per entity, DbContext, filtro e DTO, pattern 2️⃣ e 6️⃣ per provider e DI Extension — seguila e dichiaralo nell'output. Se non lo elenca, vale il ripiego della regola 9: filtro con campi nullable e `ToExpression()`, DTO record con `static Projection`, provider con `Get<Entity>Async<TDto>(filter, selector, ct)`; dichiara nell'output che stai applicando il ripiego.
 
 ---
 
@@ -564,5 +564,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.5 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2)
+*Template v2.6 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2); rimando ModelKit allineato all'esempio di dr-efdb
 
