@@ -30,21 +30,23 @@ Punti chiave di `minimal-api-architecture.instructions.md`:
 
 ## 🔗 Dipendenze e domini
 
-- Dipende da: `dr-dotnet-backend` (installato in automatico se manca dal manifest: comportamento dell'installer, non ancora provato sul campo), più il core `dr-guidelines`, dipendenza implicita di ogni pacchetto.
+- Dipende da: `dr-dotnet-backend` (installato in automatico se manca dal manifest), più il core `dr-guidelines`, dipendenza implicita di ogni pacchetto.
 - Richiesto da: nessun pacchetto.
 - Dominio del catalogo: nessun dominio lo elenca direttamente; il dominio `dotnet-backend` elenca solo `dr-dotnet-backend`. `appliesTo`: `dotnet`.
-- Tipologia che lo suggerisce: `minimal-api` — Minimal API (.NET 10), insieme a `dr-dotnet-backend`; `dr-efdb` è opzionale. Template `dotnet new web`, guida di scaffolding `docs/scaffolding-minimal-api.md` nel core.
+- Tipologia che lo suggerisce: `minimal-api` — Minimal API (.NET 10), insieme a `dr-dotnet-backend`; `dr-efdb` e `dr-devops` sono opzionali. Template `dotnet new web`, guida di scaffolding `docs/scaffolding-minimal-api.md` nel core.
 - `-Update` non si propaga alle dipendenze: aggiornare solo questo pacchetto lascia `dr-dotnet-backend` com'è. `/dr-get-latest` aggiorna anche la dipendenza, che ha una propria voce nel manifest.
 - La skill `/dr-audit-api` di `dr-dotnet-backend` usa questa istruzione nella fase di conformità quando trova `Endpoints/*.cs`.
 
 File di altri pacchetti citati dall'istruzione. Il core `dr-guidelines` si installa da solo se manca dal manifest; gli altri pacchetti no, e l'istruzione li cita in modo condizionale:
 
-| File citato | Pacchetto che lo porta |
-|-------------|------------------------|
-| `sensitive-data`, `logging` (fonte unica della configurazione Serilog), `code-organization`, `input-validation` (`.instructions.md`); skill `dr-CreateLaunchProfiles` | `dr-guidelines` (core) |
-| `database-startup-resilience.instructions.md`, `database-provider.instructions.md` (esempio ModelKit) | `dr-efdb` |
-| `frontend-organization.instructions.md` | `dr-fe` |
-| `docker-swarm-compose.instructions.md` | `dr-devops` |
+| File citato | Chi lo cita | Pacchetto che lo porta |
+|-------------|-------------|------------------------|
+| `sensitive-data`, `logging` (fonte unica della configurazione Serilog), `code-organization`, `input-validation` (`.instructions.md`); skill `dr-create-launch-profiles` | Istruzione | `dr-guidelines` (core) |
+| `database-startup-resilience.instructions.md`, `database-provider.instructions.md` (esempio ModelKit) | Istruzione, rimando condizionale | `dr-efdb` |
+| `frontend-organization.instructions.md` | Istruzione, rimando condizionale | `dr-fe` |
+| `docker-swarm-compose.instructions.md` | Istruzione, rimando condizionale (solo stack Swarm) | `dr-devops` |
+
+Pacchetti suggeriti (`suggests` del catalogo): `dr-efdb`, `dr-fe`, `dr-devops`. L'installer non li installa e non chiede nulla: a fine installazione stampa una riga `[sugg]` con il motivo per ognuno che manca dal manifest.
 
 ## 🚀 Come si installa
 
@@ -69,11 +71,14 @@ Oppure con l'installer del pacchetto:
 
 Nota: la forma breve `irm https://raw.githubusercontent.com/... | iex` è un'alternativa valida, perché i repo sono Public. Su un repo Private risponderebbe 404: lì si usa `gh api`.
 
-Se `dr-dotnet-backend` manca dal manifest, l'installer lo installa prima di `dr-minimalapi` e lo segnala con questa riga:
+Prima di scrivere, l'installer annuncia le dipendenze mancanti nell'ordine in cui le installa. In un progetto vuoto:
 
 ```text
-Dipendenza mancante: dr-dotnet-backend -> installazione automatica
+  [dep]  dr-guidelines (richiesta da dr-minimalapi, core implicito)
+  [dep]  dr-dotnet-backend (richiesta da dr-minimalapi)
 ```
+
+Con `-NoDependencies` (solo dall'installer del core, insieme a `-Package`) le dipendenze non si installano: l'installer le elenca come `[skip]`.
 
 ## 📦 Cosa finisce nel progetto host
 
@@ -84,9 +89,9 @@ Dipendenza mancante: dr-dotnet-backend -> installazione automatica
 | `.github/prompts/endpoints-analyzer.prompt.md` | Prompt per la documentazione degli endpoint |
 | `.ai/dr-guidelines-packages.json` | Voce `dr-minimalapi` con data (`installedAt`) e commit installato (`commit`) |
 
-Nessuna modifica a `CLAUDE.md` né ai file di configurazione del core (`.editorconfig`, `.gitignore`, `.gitattributes`, `.claude/settings.json`, `.mcp.json`).
+Il pacchetto non modifica `CLAUDE.md` né i file di configurazione (`.editorconfig`, `.gitignore`, `.gitattributes`, `.claude/settings.json`, `.mcp.json`). Li scrive il core, solo se viene installato insieme perché mancava dal manifest.
 
-Non vengono copiati `README.md`, `LICENSE`, `.github/ISSUE_TEMPLATE/` e l'installer.
+Non vengono copiati `README.md`, `LICENSE`, `.github/ISSUE_TEMPLATE/` e l'installer `dr-minimalapi-install.ps1`.
 
 Senza `-Update` un file già presente resta com'è e l'installer stampa `[SKIP]`.
 
@@ -104,11 +109,13 @@ Solo questo pacchetto: stesso comando dell'installer del pacchetto, con `-Update
 
 Nota: `-Update` sovrascrive le copie locali. Si installa sempre l'ultimo `main` pushato su GitHub: le modifiche a questo repo non pushate su `main` non arrivano nei progetti host.
 
+Un file rimosso da questo repo resta nel progetto host: l'installer copia, non cancella.
+
 ## 🐞 Segnalare un problema o una miglioria
 
 Non correggere la copia nel progetto host: si perde al primo `-Update`.
 
-Dal progetto host usa `/dr-segnala-miglioria <descrizione>` (su Copilot il prompt `.github/prompts/dr-segnala-miglioria.prompt.md` del core). La issue si apre in questo repo, dopo la tua conferma esplicita di titolo e corpo.
+Dal progetto host usa `/dr-file-feedback <descrizione>` (su Copilot il prompt `.github/prompts/dr-file-feedback.prompt.md` del core). La issue si apre in questo repo, dopo la tua conferma esplicita di titolo e corpo.
 
 | Modello del repo | Quando usarlo |
 |------------------|---------------|
@@ -117,4 +124,4 @@ Dal progetto host usa `/dr-segnala-miglioria <descrizione>` (su Copilot il promp
 
 ---
 
-*Documento aggiornato: Ottobre 2026 — Revisione v1.4 — 2026-10-11 — claude-opus-5-5*
+*Revisione v1.5 — 2026-10-11 21:00 — claude-opus-5-5*

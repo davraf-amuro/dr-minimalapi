@@ -497,7 +497,7 @@ builder.Services.AddScoped<ModelKitService>();
 }
 ```
 
-> **Nota:** Il percorso di `program` dipende da `OutputPath`: default standard .NET = `bin/Debug/<tfm>/`. Se `Directory.Build.props` o il csproj sovrascrivono `<OutputPath>`, leggi il valore reale e calcola il percorso di conseguenza. Con Claude Code la generazione guidata di questi file è disponibile via skill `dr-CreateLaunchProfiles` (stesso percorso di default).
+> **Nota:** Il percorso di `program` dipende da `OutputPath`: default standard .NET = `bin/Debug/<tfm>/`. Se `Directory.Build.props` o il csproj sovrascrivono `<OutputPath>`, leggi il valore reale e calcola il percorso di conseguenza. Con Claude Code la generazione guidata di questi file è disponibile via skill `dr-create-launch-profiles` (stesso percorso di default).
 
 **tasks.json**:
 ```json
@@ -564,5 +564,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.6 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2); rimando ModelKit allineato all'esempio di dr-efdb
+*Template v2.7 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2); rimando ModelKit allineato all'esempio di dr-efdb; nome skill dr-create-launch-profiles
 
