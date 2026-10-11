@@ -188,6 +188,7 @@ Due regole obbligatorie appena un'applicazione containerizzata ha un'auth con co
 I cookie di Identity e i token opachi di `AddBearerToken` sono cifrati con le chiavi Data Protection. Senza configurazione esplicita finiscono nel filesystem del container, con due conseguenze: ricreare il container invalida ogni sessione (tutti gli utenti sloggati a ogni deploy), e con `replicas > 1` ogni replica ha il proprio portachiavi (il login su una replica non vale sull'altra, quindi 401 a intermittenza).
 
 - Default: `PersistKeysToDbContext<TDbContext>()` — pacchetto `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore`, sfrutta il database già presente per Identity
+  - **La tabella `DataProtectionKeys` esiste prima che partano le repliche.** La crea una migrazione EF applicata come passo di deploy separato e serializzato (job one-shot, oppure l'eseguibile di `dotnet ef migrations bundle`), mai con `Migrate()` all'avvio quando le repliche sono più di una: repliche avviate insieme su un database senza la tabella la creano in corsa. Il sintomo non è un errore all'avvio ma un'autenticazione che funziona a intermittenza, lo stesso quadro del portachiavi non condiviso
 - Alternativa: `PersistKeysToFileSystem` su un volume montato, quando il database non è disponibile all'avvio
 - In entrambi i casi `SetApplicationName("<nome-applicazione>")` esplicito: le repliche devono condividere lo stesso spazio di chiavi
 
@@ -563,5 +564,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.5 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3)
+*Template v2.5 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2)
 
