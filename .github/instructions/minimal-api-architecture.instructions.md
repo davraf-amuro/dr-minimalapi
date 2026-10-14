@@ -98,7 +98,7 @@ Regola assoluta: se il nome progetto non è ricavabile né confermato, **fermati
 
 ## Scoperta automatica struttura DB via MCP
 
-Se nel progetto è configurato un MCP server `db-schema` (verifica in `.claude/settings.json` o `~/.claude/settings.json`, chiave `mcpServers`):
+Se nel progetto è disponibile un MCP server `db-schema`, riconoscilo così: (1) i suoi tool sono esposti nella sessione; oppure (2) è registrato in `.mcp.json` (radice progetto, ignorato da git), `.vscode/mcp.json`, `.claude/settings.json` o `~/.claude/settings.json` (chiave `mcpServers`, o `servers` in `.vscode/mcp.json`):
 
 1. **Non chiedere i campi all'utente** — leggi la struttura dalla tabella:
    - Usa `mcp__db-schema__use_connection` per selezionare la connessione
@@ -115,7 +115,7 @@ Se nel progetto è configurato un MCP server `db-schema` (verifica in `.claude/s
    - Campi con regole non determinabili dallo schema → nessun errore per quel campo + commento `// TODO: validazione`
    - Non chiedere regole all'utente: genera subito, codice compilabile e funzionante.
 
-Se MCP db-schema non è configurato: comportamento standard (chiedi i campi all'utente prima di procedere).
+Se `db-schema` non è trovato: dichiara "db-schema non trovato in <posizioni controllate>" e chiedi i campi all'utente prima di procedere.
 
 ---
 
@@ -564,5 +564,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.7 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-11 — claude-opus-5-5 — rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2); rimando ModelKit allineato all'esempio di dr-efdb; nome skill dr-create-launch-profiles
+*Template v2.8 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-14 — claude-opus-5-5 — ricerca di db-schema anche in .mcp.json e .vscode/mcp.json (dr-minimalapi#5); rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2); rimando ModelKit allineato all'esempio di dr-efdb; nome skill dr-create-launch-profiles
 
