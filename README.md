@@ -41,7 +41,8 @@ File di altri pacchetti citati dall'istruzione. Il core `dr-guidelines` si insta
 
 | File citato | Chi lo cita | Pacchetto che lo porta |
 |-------------|-------------|------------------------|
-| `sensitive-data`, `logging` (fonte unica della configurazione Serilog), `code-organization`, `input-validation` (`.instructions.md`); skill `dr-create-launch-profiles` | Istruzione | `dr-guidelines` (core) |
+| `sensitive-data`, `logging` (regole generali e soggetto del log), `code-organization`, `input-validation` (`.instructions.md`); skill `dr-create-launch-profiles` | Istruzione | `dr-guidelines` (core) |
+| `serilog-logging.instructions.md` (fonte unica della configurazione Serilog) | Istruzione, se Serilog confermato | `dr-dotnet-backend` |
 | `database-startup-resilience.instructions.md`, `database-provider.instructions.md` (esempio ModelKit) | Istruzione, rimando condizionale | `dr-efdb` |
 | `frontend-organization.instructions.md` | Istruzione, rimando condizionale | `dr-fe` |
 | `docker-swarm-compose.instructions.md` | Istruzione, rimando condizionale (solo stack Swarm) | `dr-devops` |
@@ -124,4 +125,4 @@ Dal progetto host usa `/dr-file-feedback <descrizione>` (su Copilot il prompt `.
 
 ---
 
-*Revisione v1.5 — 2026-10-11 21:00 — claude-opus-5-5*
+*Revisione v1.6 — 2026-10-20 18:25 — claude-opus-5-5*
