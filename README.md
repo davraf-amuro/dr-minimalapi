@@ -53,7 +53,7 @@ Pacchetti suggeriti (`suggests` del catalogo): `dr-efdb`, `dr-fe`, `dr-devops`. 
 
 Di solito non serve installarlo a mano. Per una soluzione nuova segui la guida del core [Creare una soluzione da zero](https://github.com/davraf-amuro/dr-guidelines/blob/main/docs/guida-nuova-soluzione.md): `/dr-scaffold` installa da solo i pacchetti giusti. Il flusso completo non è ancora stato provato sul campo.
 
-A mano. Il core `dr-guidelines` porta `CLAUDE.md`, configurazione e skill: se manca dal manifest, l'installer lo installa per primo, con entrambe le forme qui sotto. Prerequisiti: PowerShell 7, git, `gh auth status` autenticato (l'installer si scarica con `gh api`; i repo sono Public dal 2026-09-21). L'installer clona il repo da `github.com` con `git clone --depth 1`: con i repo Public non servono credenziali; su un repo Private anche git deve poterlo leggere (`gh auth setup-git`).
+A mano. Il core `dr-guidelines` porta `CLAUDE.md`, configurazione e skill: se manca dal manifest, l'installer lo installa per primo, con entrambe le forme qui sotto. Prerequisiti: PowerShell 7 e git (l'installer clona il repo con `git clone --depth 1`). `gh` autenticato (`gh auth status`) serve solo alle forme `gh api` qui sotto: i repo sono Public dal 2026-09-21. Su un repo Private anche git deve poterlo leggere (`gh auth setup-git`).
 
 Lancia i comandi dalla **root del repository host**: l'installer usa la cartella corrente come destinazione e non avvisa se sbagli cartella.
 
@@ -90,7 +90,7 @@ Con `-NoDependencies` (solo dall'installer del core, insieme a `-Package`) le di
 | `.github/prompts/endpoints-analyzer.prompt.md` | Prompt per la documentazione degli endpoint |
 | `.ai/dr-guidelines-packages.json` | Voce `dr-minimalapi` con data (`installedAt`) e commit installato (`commit`) |
 
-Il pacchetto non modifica `CLAUDE.md` né i file di configurazione (`.editorconfig`, `.gitignore`, `.gitattributes`, `.claude/settings.json`, `.mcp.json`). Li scrive il core, solo se viene installato insieme perché mancava dal manifest.
+Il pacchetto non modifica `CLAUDE.md` né i file di configurazione (`.editorconfig`, `.gitignore`, `.gitattributes`, `.claude/settings.json`, `.mcp.json`). Li scrive il core, solo se viene installato insieme perché mancava dal manifest; `.mcp.json` solo con `-WithMcp` dell'installer del core.
 
 Non vengono copiati `README.md`, `LICENSE`, `.github/ISSUE_TEMPLATE/` e l'installer `dr-minimalapi-install.ps1`.
 
@@ -125,4 +125,4 @@ Dal progetto host usa `/dr-file-feedback <descrizione>` (su Copilot il prompt `.
 
 ---
 
-*Revisione v1.6 — 2026-10-20 18:25 — claude-opus-5-5*
+*Revisione v1.7 — 2026-10-20 21:00 — claude-opus-5-5*
