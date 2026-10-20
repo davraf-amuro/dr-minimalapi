@@ -14,7 +14,7 @@ Punti chiave di `minimal-api-architecture.instructions.md`:
 
 | Tema | Cosa impone |
 |------|-------------|
-| Stack | .NET 10 Minimal API, `Tinyhelpers.AspNetCore`, Scalar per la documentazione, `Asp.Versioning.Mvc.ApiExplorer`. Serilog opzionale, da chiedere. |
+| Stack | .NET 10 Minimal API, `Tinyhelpers.AspNetCore`, Scalar per la documentazione, `Asp.Versioning.Mvc.ApiExplorer`. Serilog obbligatorio (`dr-dotnet-backend`). |
 | Vietato | MVC Controllers, Swagger UI, IRepository, AutoMapper, MediatR. `AddJwtBearer` per utenti umani salvo richiesta esplicita e motivata. |
 | Struttura | `src/<project>/` con `Dto/`, `Endpoints/`, `Infrastructure/Provider/`, `Services/`, `Transformers/`, `Validators/`, `Properties/`; poi `test/` e `docs/`. |
 | Endpoint | Solo extension methods in `Endpoints/*Mapping.cs`. URL `api/v{version:apiVersion}/{gruppo}/{comando?}`, versioning con `UrlSegmentApiVersionReader`. |
@@ -42,7 +42,7 @@ File di altri pacchetti citati dall'istruzione. Il core `dr-guidelines` si insta
 | File citato | Chi lo cita | Pacchetto che lo porta |
 |-------------|-------------|------------------------|
 | `sensitive-data`, `logging` (regole generali e soggetto del log), `code-organization`, `input-validation` (`.instructions.md`); skill `dr-create-launch-profiles` | Istruzione | `dr-guidelines` (core) |
-| `serilog-logging.instructions.md` (fonte unica della configurazione Serilog) | Istruzione, se Serilog confermato | `dr-dotnet-backend` |
+| `serilog-logging.instructions.md` (fonte unica della configurazione Serilog) | Istruzione | `dr-dotnet-backend` |
 | `database-startup-resilience.instructions.md`, `database-provider.instructions.md` (esempio ModelKit) | Istruzione, rimando condizionale | `dr-efdb` |
 | `frontend-organization.instructions.md` | Istruzione, rimando condizionale | `dr-fe` |
 | `docker-swarm-compose.instructions.md` | Istruzione, rimando condizionale (solo stack Swarm) | `dr-devops` |
