@@ -123,14 +123,9 @@ Se `db-schema` non è trovato: dichiara "db-schema non trovato in <posizioni con
 
 Applica solo se confermato nella raccolta informazioni iniziale.
 
-**Pacchetti NuGet da aggiungere:**
-```
-Serilog.AspNetCore
-Serilog.Sinks.File
-Serilog.Sinks.Console
-```
+**Pacchetti, configurazione, enricher e soggetto del log:** segui `serilog-logging.instructions.md` (pacchetto `dr-dotnet-backend`) — è la **fonte unica** della configurazione Serilog. Non duplicare qui varianti alternative: due configurazioni divergenti per lo stesso stack generano codice incoerente.
 
-**Configurazione (Program.cs, template di output, enrichers ThreadId/TaskId):** segui `logging.instructions.md` — è la **fonte unica** della configurazione Serilog. Non duplicare qui varianti alternative: due configurazioni divergenti per lo stesso stack generano codice incoerente.
+In sintesi: livelli, sink e template nella sezione `Serilog` di `appsettings.json` (sovrascrivibili con variabili d'ambiente quando l'API gira in container), enricher in `Program.cs`. Se l'utente indica un soggetto (es. l'ID dell'entità dell'endpoint), ogni handler che lo tratta apre `LogSubject.Begin` come prima istruzione.
 
 **Cartella logs — aggiungere a `.gitignore`:**
 ```
@@ -550,7 +545,8 @@ builder.Services.AddScoped<ModelKitService>();
 - [ ] File .http aggiunto per endpoint nuovi
 - [ ] `.vscode/launch.json` e `tasks.json` creati con `type: coreclr`
 - [ ] `appsettings.json` contiene solo valori fake/placeholder per dati sensibili, mai credenziali reali
-- [ ] Se Serilog confermato: configurazione conforme a `logging.instructions.md` (fonte unica), `logs/` in .gitignore
+- [ ] Se Serilog confermato: configurazione conforme a `serilog-logging.instructions.md` (fonte unica), sezione `Serilog` in `appsettings.json`, `logs/` in .gitignore
+- [ ] Soggetto del log indicato dall'utente: `LogSubject.Begin` all'inizio di ogni handler che lo tratta
 
 ## 🎯 Criteri di successo (verificare prima di iniziare)
 
@@ -564,5 +560,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.8 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-14 — claude-opus-5-5 — ricerca di db-schema anche in .mcp.json e .vscode/mcp.json (dr-minimalapi#5); rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2); rimando ModelKit allineato all'esempio di dr-efdb; nome skill dr-create-launch-profiles
+*Template v2.9 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-20 — claude-opus-5-5 — Serilog: fonte unica `serilog-logging.instructions.md` (`dr-dotnet-backend`), configurazione da `appsettings.json`, soggetto del log. v2.8: ricerca di db-schema anche in .mcp.json e .vscode/mcp.json (dr-minimalapi#5); rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2); rimando ModelKit allineato all'esempio di dr-efdb; nome skill dr-create-launch-profiles
 
