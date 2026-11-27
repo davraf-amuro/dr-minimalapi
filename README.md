@@ -1,12 +1,12 @@
 # dr-minimalapi
 
-Pacchetto di linee guida dr-* per i progetti ASP.NET Core Minimal API su .NET 10: architettura, endpoint, accesso ai dati e documentazione.
+Pacchetto di linee guida dr-* per i progetti ASP.NET Core Minimal API su .NET 11: architettura, endpoint, accesso ai dati e documentazione.
 
 ## 🧩 Cosa contiene
 
 | File | Tipo | A cosa serve |
 |------|------|--------------|
-| `.github/instructions/minimal-api-architecture.instructions.md` | Istruzione | Regole obbligatorie per le Minimal API .NET 10: stack, divieti, struttura delle cartelle e 13 regole core con pattern di codice copiabili. Prima di creare file impone una raccolta informazioni in un unico messaggio (entità e campi, nome progetto, Serilog, autenticazione, connessione DB) e si ferma se il nome progetto non è confermato. |
+| `.github/instructions/minimal-api-architecture.instructions.md` | Istruzione | Regole obbligatorie per le Minimal API .NET 11: stack, divieti, struttura delle cartelle e 13 regole core con pattern di codice copiabili. Prima di creare file impone una raccolta informazioni in un unico messaggio (entità e campi, nome progetto, Serilog, autenticazione, connessione DB) e si ferma se il nome progetto non è confermato. |
 | `.github/prompts/card-minimal-api.prompt.md` | Prompt | Genera o aggiorna `docs/card-<nome_progetto>.md`, la scheda riassuntiva del progetto: identificazione, stack, endpoint group, dipendenze, database, servizi esterni, hosting. Ricava i dati da `.csproj`, `appsettings*.json`, `launchSettings.json`, `Program.cs`, `Endpoints/`, `Services/`, `Infrastructure/` e `Dto/`, senza inventare e senza scrivere valori sensibili. |
 | `.github/prompts/endpoints-analyzer.prompt.md` | Prompt | Genera `docs/endpoint-<group_name>.md` per ogni `MapGroup`, sovrascrivendo il file se esiste. Ogni documento ha la tabella degli endpoint (metodo, URL, descrizione, parametri, risposta) e i diagrammi di flusso Endpoint → Validator → Service → Provider → Entity → DTO → Response, con rimando ai file `.http`. |
 
@@ -14,7 +14,7 @@ Punti chiave di `minimal-api-architecture.instructions.md`:
 
 | Tema | Cosa impone |
 |------|-------------|
-| Stack | .NET 10 Minimal API, `Tinyhelpers.AspNetCore`, Scalar per la documentazione, `Asp.Versioning.Mvc.ApiExplorer`. Serilog obbligatorio (`dr-dotnet-backend`). |
+| Stack | .NET 11 Minimal API, `Tinyhelpers.AspNetCore`, Scalar per la documentazione, `Asp.Versioning.Mvc.ApiExplorer`. Serilog obbligatorio (`dr-dotnet-backend`). |
 | Vietato | MVC Controllers, Swagger UI, IRepository, AutoMapper, MediatR. `AddJwtBearer` per utenti umani salvo richiesta esplicita e motivata. |
 | Struttura | `src/<project>/` con `Dto/`, `Endpoints/`, `Infrastructure/Provider/`, `Services/`, `Transformers/`, `Validators/`, `Properties/`; poi `test/` e `docs/`. |
 | Endpoint | Solo extension methods in `Endpoints/*Mapping.cs`. URL `api/v{version:apiVersion}/{gruppo}/{comando?}`, versioning con `UrlSegmentApiVersionReader`. |
@@ -33,7 +33,7 @@ Punti chiave di `minimal-api-architecture.instructions.md`:
 - Dipende da: `dr-dotnet-backend` (installato in automatico se manca dal manifest), più il core `dr-guidelines`, dipendenza implicita di ogni pacchetto.
 - Richiesto da: nessun pacchetto.
 - Dominio del catalogo: nessun dominio lo elenca direttamente; il dominio `dotnet-backend` elenca solo `dr-dotnet-backend`. `appliesTo`: `dotnet`.
-- Tipologia che lo suggerisce: `minimal-api` — Minimal API (.NET 10), insieme a `dr-dotnet-backend`; `dr-efdb` e `dr-devops` sono opzionali. Template `dotnet new web`, guida di scaffolding `docs/scaffolding-minimal-api.md` nel core.
+- Tipologia che lo suggerisce: `minimal-api` — Minimal API (.NET 11), insieme a `dr-dotnet-backend`; `dr-efdb` e `dr-devops` sono opzionali. Template `dotnet new web`, guida di scaffolding `docs/scaffolding-minimal-api.md` nel core.
 - `-Update` non si propaga alle dipendenze: aggiornare solo questo pacchetto lascia `dr-dotnet-backend` com'è. `/dr-get-latest` aggiorna anche la dipendenza, che ha una propria voce nel manifest.
 - La skill `/dr-audit-api` di `dr-dotnet-backend` usa questa istruzione nella fase di conformità quando trova `Endpoints/*.cs`.
 
@@ -125,4 +125,4 @@ Dal progetto host usa `/dr-file-feedback <descrizione>` (su Copilot il prompt `.
 
 ---
 
-*Revisione v1.7 — 2026-10-20 21:00 — claude-opus-5-5*
+*Revisione v1.8 — 2026-11-27 15:23 — claude-sonnet-5-5*
