@@ -39,7 +39,7 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - **Contatto Supporto:** [email-supporto]
 
 ## Stack Tecnologico
-- **Linguaggio Principale:** C# 14
+- **Linguaggio Principale:** C# 15
 - **Framework:** .NET 11 ASP.NET Core Minimal API
 - **Target Framework:** net11.0
 - **SDK Version:** Microsoft.NET.Sdk.Web
@@ -106,4 +106,4 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - [ ] Ambiente Test compilato (o `non pubblicato`)
 - [ ] Ambiente Produzione compilato (o `non pubblicato`)
 
-*Template v1.4 - .NET 11 Minimal API - Token-optimized for AI agents* - Last Update 2026-11-27 — claude-sonnet-5-5 — .NET 11 come versione consigliata (davraf-amuro/dr-guidelines#37). v1.3 (2026-06-12, claude-sonnet-4-6)
+*Template v1.5 - .NET 11 Minimal API - Token-optimized for AI agents* - Last Update 2026-11-27 — claude-sonnet-5-5 — linguaggio C# 15, default del compilatore su net11.0 (davraf-amuro/dr-guidelines#37). v1.4: .NET 11 come versione consigliata. v1.3 (2026-06-12, claude-sonnet-4-6)
