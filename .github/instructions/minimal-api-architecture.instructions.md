@@ -4,15 +4,15 @@ applyTo: "**"
 
 # Minimal API Design Rules (AI Agent)
 
-Scopo: regole obbligatorie per progetti Minimal API .NET 10. Segui sempre. Testo ottimizzato per token.
+Scopo: regole obbligatorie per progetti Minimal API .NET 11. Segui sempre. Testo ottimizzato per token.
 
 ## Stack (obbligatorio)
-- .NET 10, ASP.NET Core Minimal API (no Controllers)
+- .NET 11 (`net11.0`, la versione indicata da `defaults.dotnetFramework` nel catalogo del core), ASP.NET Core Minimal API (no Controllers)
 - Tinyhelpers.AspNetCore (installare sempre)
 - Scalar per docs (no Swagger UI)
 - Asp.Versioning.Mvc.ApiExplorer (obbligatorio per Scalar)
 - Serilog (obbligatorio — `dr-dotnet-backend` è dipendenza di questo pacchetto, quindi `serilog-logging.instructions.md` è sempre installato; segui sezione "Serilog — configurazione completa")
-- Entity Framework Core 10: se già presente nel `.csproj`, dichiaralo e prosegui senza chiedere. Chiedi solo se assente.
+- Entity Framework Core 11: se già presente nel `.csproj`, dichiaralo e prosegui senza chiedere. Chiedi solo se assente.
 - Autenticazione/autorizzazione: **solo se esplicitamente richiesta dal developer** — nessun pattern auth di default. Se richiesta, segui la sezione "Autenticazione": lo schema dipende dal tipo di client, non è una scelta libera
 - Aggiungi sempre il file launchSettings.json con configurazione per IIS Express e Kestrel
 - Aggiungi sempre il file appsettings.local.json, aggiungi la chiamata in program.cs, e ignora il file in .gitignore
@@ -465,7 +465,7 @@ builder.Services.AddScoped<ModelKitService>();
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/src/<project>/bin/Debug/net10.0/<project>.dll",
+      "program": "${workspaceFolder}/src/<project>/bin/Debug/net11.0/<project>.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/<project>",
       "stopAtEntry": false,
@@ -479,7 +479,7 @@ builder.Services.AddScoped<ModelKitService>();
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/src/<project>/bin/Debug/net10.0/<project>.dll",
+      "program": "${workspaceFolder}/src/<project>/bin/Debug/net11.0/<project>.dll",
       "args": [],
       "cwd": "${workspaceFolder}/src/<project>",
       "stopAtEntry": false,
@@ -560,5 +560,5 @@ Se una risposta è NO → chiedi chiarimenti all'utente prima di procedere.
 ## Test
 - Aggiungi sempre un file .http per endpoint nuovi
 
-*Template v2.10 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-10-20 — claude-opus-5-5 — audit suite: Serilog obbligatorio (non più opzionale), `Infrastructure/Logging/` nella struttura, "Regola 13" unificata, soglia `[AsParameters]` > 2, nomi dei tool MCP neutri con rimando all'installazione di `db-schema`. v2.9: Serilog: fonte unica `serilog-logging.instructions.md` (`dr-dotnet-backend`), configurazione da `appsettings.json`, soggetto del log. v2.8: ricerca di db-schema anche in .mcp.json e .vscode/mcp.json (dr-minimalapi#5); rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2); rimando ModelKit allineato all'esempio di dr-efdb; nome skill dr-create-launch-profiles
+*Template v2.11 - .NET 11 - Token-optimized for AI agents* - Last Update 2026-11-27 — claude-sonnet-5-5 — .NET 11 come versione consigliata (davraf-amuro/dr-guidelines#37). v2.10 (2026-10-20, claude-opus-5-5): audit suite: Serilog obbligatorio (non più opzionale), `Infrastructure/Logging/` nella struttura, "Regola 13" unificata, soglia `[AsParameters]` > 2, nomi dei tool MCP neutri con rimando all'installazione di `db-schema`. v2.9: Serilog: fonte unica `serilog-logging.instructions.md` (`dr-dotnet-backend`), configurazione da `appsettings.json`, soggetto del log. v2.8: ricerca di db-schema anche in .mcp.json e .vscode/mcp.json (dr-minimalapi#5); rimandi a dr-efdb, dr-fe e dr-devops condizionali al manifest (dr-minimalapi#1, #3); migrazione di DataProtectionKeys prima delle repliche (dr-minimalapi#2); rimando ModelKit allineato all'esempio di dr-efdb; nome skill dr-create-launch-profiles
 

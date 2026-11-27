@@ -1,6 +1,6 @@
 ---
 agent: 'agent'
-description: 'Genera la scheda riassuntiva per progetti Minimal API .NET 10'
+description: 'Genera la scheda riassuntiva per progetti Minimal API .NET 11'
 tools: ['search/codebase']
 ---
 
@@ -31,7 +31,7 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - **Solution:** [NomeSolution.sln]
 - **Workspace:** [NomeWorkspace.code-workspace]
 - **Repository:** [URL senza branch]
-- **Tipo Applicazione:** Minimal API (.NET 10)
+- **Tipo Applicazione:** Minimal API (.NET 11)
 - **Pattern Architetturale:** Minimal API + Service + Provider + Scalar
 - **Versione Corrente:**
 - **Owner/Team:**
@@ -40,8 +40,8 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 
 ## Stack Tecnologico
 - **Linguaggio Principale:** C# 14
-- **Framework:** .NET 10 ASP.NET Core Minimal API
-- **Target Framework:** net10.0
+- **Framework:** .NET 11 ASP.NET Core Minimal API
+- **Target Framework:** net11.0
 - **SDK Version:** Microsoft.NET.Sdk.Web
 
 ## Endpoint Groups
@@ -63,7 +63,7 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 ## Database
 | Connection String Key | Nome Database | Tipo | Server/Host | Username | Provider/ORM |
 |-----------------------|---------------|------|-------------|----------|--------------|
-| ... | ... | ... | da `appsettings.local.json` | da `appsettings.local.json` | EF Core 10 |
+| ... | ... | ... | da `appsettings.local.json` | da `appsettings.local.json` | EF Core 11 |
 
 ## Servizi Esterni
 | Tipo | Nome/Endpoint | Protocollo | Autenticazione | Scopo/Descrizione |
@@ -106,4 +106,4 @@ Espone [N] endpoint group: `[Group1]`, `[Group2]`, ...
 - [ ] Ambiente Test compilato (o `non pubblicato`)
 - [ ] Ambiente Produzione compilato (o `non pubblicato`)
 
-*Template v1.3 - .NET 10 Minimal API - Token-optimized for AI agents* - Last Update 2026-06-12 — claude-sonnet-4-6
+*Template v1.4 - .NET 11 Minimal API - Token-optimized for AI agents* - Last Update 2026-11-27 — claude-sonnet-5-5 — .NET 11 come versione consigliata (davraf-amuro/dr-guidelines#37). v1.3 (2026-06-12, claude-sonnet-4-6)

@@ -45,4 +45,4 @@ La versione template e in fondo a questo file.
 - [ ] Riferimenti a file .http se presenti
 - [ ] Footer con data e LLM
 
-*Template v1.5 - .NET 10 - Token-optimized for AI agents* - Last Update 2026-07-02 00:03 — claude-fable-5
+*Template v1.6 - .NET 11 - Token-optimized for AI agents* - Last Update 2026-11-27 — claude-sonnet-5-5 — .NET 11 come versione consigliata (davraf-amuro/dr-guidelines#37). v1.5 (2026-07-02, claude-fable-5)
